@@ -1,0 +1,16 @@
+#!/bin/bash
+#generate tags for Ext.js source code
+# (or Ext.js project which follows same code conventions)
+EXT_SRC=${EXT_HOME}/source
+
+echo '!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/'
+echo '!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/'
+echo '!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/'
+echo '!_TAG_PROGRAM_NAME	Exuberant Ctags	'
+echo '!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	'
+echo '!_TAG_PROGRAM_VERSION	5.8	//'
+
+
+for file in $(find $EXT_SRC -name '*.js'); do
+	getExtTags.pl $file
+done
