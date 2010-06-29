@@ -2,8 +2,7 @@
 "
 " @Author:      David Wilhelm 
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
-" requires: tlib
-" modified from original author:
+" modified from:
 " @Author:      Thomas Link (mailto:micathom AT gmail com?subject=[vim])
 " @Website:     http://www.vim.org/account/profile.php?user_id=4037
 " @License:     GPL (see http://www.gnu.org/licenses/gpl.txt)
@@ -16,17 +15,38 @@ if &cp || exists("loaded_jstagcomplete_autoload")
 endif
 let loaded_jstagcomplete_autoload = 1
 
-" jstagcomplete uses 'completefunc' (user-defined completion C-X C-U or SuperTab) so as to not conflict with
-" pre-existing omnicompletion
-function! jstagcomplete#On() 
+" function! jstagcomplete#On(?option="omni")
+" If option is "complete", set 'completefunc' instead of 'omnifunc' (the 
+" default).
+function! jstagcomplete#On(...) 
+    TVarArg ['option', 'omni']
+    let var = 'option_'. option
+    if option == 'omni'
+        let b:jstagcomplete_option_{option} = &omnifunc
+		setlocal omnifunc=jstagcomplete#Complete
+    elseif option == 'complete'
         let b:jstagcomplete_option_{option} = &completefunc
         setlocal completefunc=jstagcomplete#Complete
+    else
+        echoerr 'Unknown option: '. option
+    endif
 endf
 
+
 function! jstagcomplete#Off(...) 
+    TVarArg ['option', 'omni']
+    let var = 'option_'. option
+    if option == 'omni'
+        if exists('b:jstagcomplete_option_'.option)
+            let &l:omnifunc=b:jstagcomplete_option_{option}
+        endif
+    elseif option == 'complete'
         if exists('b:jstagcomplete_option_'.option)
             let &l:completefunc=b:jstagcomplete_option_{option}
         endif
+    else
+        echoerr 'Unknown option: '. option
+    endif
 endf
 
 function! jstagcomplete#Complete(findstart, base) 
@@ -42,12 +62,14 @@ function! jstagcomplete#Complete(findstart, base)
         let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
         let constraints.name = tlib#rx#Escape(a:base)
         let context = strpart(line, 0, start)
-        if exists('b:jstagcomplete_collect')
-            call call(b:jstagcomplete_collect, [constraints, a:base, context])
-        endif
-        if exists('*TTagcomplete_collect_'. &filetype)
-            call TTagcomplete_{&filetype}(constraints, a:base, context)
-        endif
+        "if exists('b:jstagcomplete_collect')
+            "Decho("found collector function")
+            "call call(b:jstagcomplete_collect, [constraints, a:base, context])
+        "endif
+        call jstagcomplete#JavaScript(constraints, a:base, context)
+        "if exists('*TTagcomplete_collect_'. &filetype)
+            "call TTagcomplete_{&filetype}(constraints, a:base, context)
+        "endif
         " TLogVAR constraints
         let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
         "augment tags with preview and kind info
@@ -68,11 +90,11 @@ endf
 
 "Javascript Complete
 function! jstagcomplete#JavaScript(constraints, base, context) 
-    
+    Decho("jstagcomplete#JavaScript")
     "base is everything after last .
     "context is everything up to and including last dot
-    "Decho("base: " . a:base)
-    "Decho("context: " . a:context)
+"Decho("base: " . a:base)
+"Decho("context: " . a:context)
     ""trim whitespace (eg leading tab)
     let context = matchstr(a:context, '\s*\zs\S*')
 
