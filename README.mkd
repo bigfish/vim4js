@@ -7,3 +7,16 @@ requires:
     tlib
 
 warning: work in progress!
+
+usage:
+
+
+generate tags using genExtTags script
+
+add this to .vimrc
+
+autocmd FileType javascript JSTagCompleteOn complete
+
+"add javascript tags
+:autocmd BufNewFile,BufRead *.js,*.html set tags+=$EXT_HOME/tags
+
