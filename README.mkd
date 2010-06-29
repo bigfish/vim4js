@@ -1,0 +1,9 @@
+Tag based Auto-completion for Javascript
+
+requires:
+    exuberant ctags
+    perl
+    vim with +perl
+    tlib
+
+warning: work in progress!
