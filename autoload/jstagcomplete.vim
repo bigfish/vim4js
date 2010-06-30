@@ -78,7 +78,7 @@ function! jstagcomplete#Complete(findstart, base)
         for tag in tags
             let result = {}
             let result['word'] = tag['name']
-            if len(tag['signature']) > 0
+            if has_key(tag, 'signature')
                 let result['word'] = tag['name'].tag['signature']
                 let result['abbr'] = tag['name'].tag['signature']
             endif
