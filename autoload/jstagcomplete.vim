@@ -15,6 +15,13 @@ if &cp || exists("loaded_jstagcomplete_autoload")
 endif
 let loaded_jstagcomplete_autoload = 1
 
+"take note of paths to check for in tag results to use as constraints
+"obviously these environment vars must be set to the same values as in the
+"tags themselves
+let g:DOMPath = $HTML5_HOME
+let g:ExtSourcePath = $EXT_HOME
+
+
 " function! jstagcomplete#On(?option="omni")
 " If option is "complete", set 'completefunc' instead of 'omnifunc' (the 
 " default).
@@ -76,15 +83,25 @@ function! jstagcomplete#Complete(findstart, base)
         endif
 
         "augment tags with preview and kind info
-        "Decho( keys(tags[1]))
         let results = []
         for tag in tags
             let result = {}
             let result['word'] = tag['name']
+            let tag_meta = ''
+
+            if stridx(tag['filename'], g:DOMPath) > -1
+                let tag_meta = 'HTML5 DOM'
+            elseif stridx(tag['filename'], g:ExtSourcePath) > -1
+                let tag_meta = 'EXT'
+            endif
+            "add method signature if exists
             if has_key(tag, 'signature')
                 let result['word'] = tag['name'].tag['signature']
-                let result['abbr'] = tag['name'].tag['signature'].' '.tag['filename']
+                let result['abbr'] = tag['name'].tag['signature']
             endif
+            "add tag metadata
+            let result['abbr'] = result['abbr'] . '   '.tag_meta
+
             call add(results, result)
         endfor
         return results
