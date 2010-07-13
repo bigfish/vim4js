@@ -62,16 +62,19 @@ function! jstagcomplete#Complete(findstart, base)
         let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
         let constraints.name = tlib#rx#Escape(a:base)
         let context = strpart(line, 0, start)
-        "if exists('b:jstagcomplete_collect')
-            "Decho("found collector function")
-            "call call(b:jstagcomplete_collect, [constraints, a:base, context])
-        "endif
+
+        "1. attempt to do a contextual tag search by getting constraints
         call jstagcomplete#JavaScript(constraints, a:base, context)
-        "if exists('*TTagcomplete_collect_'. &filetype)
-            "call TTagcomplete_{&filetype}(constraints, a:base, context)
-        "endif
-        " TLogVAR constraints
+        "get matching tags using constraints
         let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
+
+        "if we don't get any results, try DOM or JSCore lookup without any constraints 
+        if len(tags) == 0
+            let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
+            let constraints.name = tlib#rx#Escape(a:base)
+            let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
+        endif
+
         "augment tags with preview and kind info
         "Decho( keys(tags[1]))
         let results = []
@@ -80,7 +83,7 @@ function! jstagcomplete#Complete(findstart, base)
             let result['word'] = tag['name']
             if has_key(tag, 'signature')
                 let result['word'] = tag['name'].tag['signature']
-                let result['abbr'] = tag['name'].tag['signature']
+                let result['abbr'] = tag['name'].tag['signature'].' '.tag['filename']
             endif
             call add(results, result)
         endfor
@@ -90,7 +93,7 @@ endf
 
 "Javascript Complete
 function! jstagcomplete#JavaScript(constraints, base, context) 
-    Decho("jstagcomplete#JavaScript")
+    "Decho("jstagcomplete#JavaScript")
     "base is everything after last .
     "context is everything up to and including last dot
 "Decho("base: " . a:base)
