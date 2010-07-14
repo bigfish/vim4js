@@ -87,18 +87,30 @@ function! jstagcomplete#Complete(findstart, base)
         for tag in tags
             let result = {}
             let result['word'] = tag['name']
+            let result['abbr'] = tag['name']
             let tag_meta = ''
-
+            " show type info
+            if has_key(tag, 'type')
+                let tag_meta .= tag['type']
+            endif
+            "show class where tag is defined
+            "this is done differently depending on library used
             if stridx(tag['filename'], g:DOMPath) > -1
-                let tag_meta = 'HTML5 DOM'
+                if has_key(tag, 'class')
+                    let tag_meta = tag_meta . ' > '. tag['class']
+                endif
             elseif stridx(tag['filename'], g:ExtSourcePath) > -1
-                let tag_meta = 'EXT'
+                if has_key(tag, 'link')
+                    "help link is actually fully qualified class name
+                    let tag_meta = tag_meta .  '    > ' . tag['link']
+                endif
             endif
             "add method signature if exists
             if has_key(tag, 'signature')
                 let result['word'] = tag['name'].tag['signature']
                 let result['abbr'] = tag['name'].tag['signature']
             endif
+
             "add tag metadata
             let result['abbr'] = result['abbr'] . '   '.tag_meta
 
