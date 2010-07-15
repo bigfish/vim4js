@@ -69,6 +69,94 @@ function! s:OpenExtDoc(word)
 	endif
 endfunction
 
+"Ext Class
+if !hasmapto('<Plug>ExtClass')
+	map <Leader>c <Plug>ExtClass
+endif
+
+noremap <script> <Plug>ExtClass <SID>ExtClass
+noremap <SID>ExtClass :call <SID>ExtClass()<CR>
+
+if !exists(":ExtClass")
+	command ExtClass :call s:ExtClass()
+endif
+
+function! s:ExtClass()
+
+    let s:class_name = input("fully qualified class name: ")
+    let s:class_descr = input("description: ")
+    let s:class_extends = input("extends class: ")
+    
+    "set cursor for appending lines
+    let s:linenum = line(".")
+
+    "start comment
+    call s:AppendLine("    /**")
+    call s:AppendLine("     * @class ".s:class_name)
+    call s:AppendLine("     * @extends ".s:class_extends)
+    call s:AppendLine("     * ".s:class_descr)
+    call s:AppendLine("     */")
+    
+    
+    if len(s:class_extends) > 0
+        "allow shortcut types for extends
+        let s:class_extends = s:ExpandTypeName(s:class_extends)
+        "if the extends class is an Ext class, use Ext.extend
+        "else use prototype = new SuperClass()
+        if s:class_extends =~ "Ext"
+            call s:AppendLine(class_name . " = Ext.extend(" . s:class_extends .", {") 
+            call s:AppendLine("     <++>")
+            call s:AppendLine(" });")
+        else
+            call s:AppendLine(s:class_name . ".prototype = new " . s:class_extends ."();");
+        endif
+    else
+        "simplest case: use object literal
+        call s:AppendLine(s:class_name . " = {")
+        call s:AppendLine("     <++>")
+        call s:AppendLine(" };")
+    endif
+
+
+endfunction
+"/**
+ "* @class Ext.CompositeElement
+ "* @extends Ext.CompositeElementLite
+ "* <p>This class encapsulates a <i>collection</i> of DOM elements, providing methods to filter
+"Ext Property
+if !hasmapto('<Plug>ExtProperty')
+	map <Leader>p <Plug>ExtProperty
+endif
+
+noremap <script> <Plug>ExtProperty <SID>ExtProperty
+noremap <SID>ExtProperty :call <SID>ExtProperty()<CR>
+
+if !exists(":ExtProperty")
+	command ExtProperty :call s:ExtProperty()
+endif
+
+function! s:ExtProperty()
+
+    let s:prop_name = input("prop name: ")
+    let s:prop_descr = input("description: ")
+    let s:prop_type = input("prop type: ")
+    
+    "expand type shortcuts
+    let s:prop_type = s:ExpandTypeName(s:prop_type)
+
+    "set cursor for appending lines
+    let s:linenum = line(".")
+
+    "start comment
+    call s:AppendLine("    /**")
+    call s:AppendLine("     * ".s:prop_descr)
+    call s:AppendLine("     * @type ".s:prop_type)
+    call s:AppendLine("     */")
+
+    call s:AppendLine(s:prop_name . " :<++>,")
+
+endfunction
+
 "Ext Method
 if !hasmapto('<Plug>ExtMethod')
 	map <Leader>m <Plug>ExtMethod
