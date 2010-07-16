@@ -125,11 +125,11 @@ function! s:ExtClass()
     let s:linenum = line(".")
 
     "start comment
-    call s:AppendLine("    /**")
-    call s:AppendLine("     * @class ".s:class_name)
-    call s:AppendLine("     * @extends ".s:class_extends)
-    call s:AppendLine("     * ".s:class_descr)
-    call s:AppendLine("     */")
+    call s:AppendLine("/**")
+    call s:AppendLine(" * @class ".s:class_name)
+    call s:AppendLine(" * @extends ".s:class_extends)
+    call s:AppendLine(" * ".s:class_descr)
+    call s:AppendLine(" */")
     
     
     if len(s:class_extends) > 0
@@ -147,8 +147,8 @@ function! s:ExtClass()
     else
         "simplest case: use object literal
         call s:AppendLine(s:class_name . " = {")
-        call s:AppendLine("     <++>")
-        call s:AppendLine(" };")
+        call s:AppendLine("	<++>")
+        call s:AppendLine("};")
     endif
 
 
