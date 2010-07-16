@@ -1,8 +1,42 @@
 " filetype plugin for javascript
 " David Wilhelm
 " dewilhelm@gmail.com
-" 28 April 2010
+" 15 July 2010
+" Note: this must precede $VIMRUNTIME in runtimepath
+" or it will not load.. the default javascript ftplugin will load
 
+if exists("b:did_ftplugin")
+  finish
+endif
+let b:did_ftplugin = 1
+
+let s:cpo_save = &cpo
+set cpo&vim
+
+" ******************* copied from system ftplugin ***********************
+" Set 'formatoptions' to break comment lines but not other lines,
+" and insert the comment leader when hitting <CR> or using "o".
+setlocal formatoptions-=t formatoptions+=croql
+
+" Set completion with CTRL-X CTRL-O to autoloaded function.
+if exists('&ofu')
+    setlocal omnifunc=javascriptcomplete#CompleteJS
+endif
+
+" Set 'comments' to format dashed lists in comments.
+setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
+
+setlocal commentstring=//%s
+
+" Change the :browse e filter to primarily show Java-related files.
+if has("gui_win32")
+    let  b:browsefilter="Javascript Files (*.js)\t*.js\n"
+		\	"All Files (*.*)\t*.*\n"
+endif
+
+" ******************* end copy paste from system ftplugin ******************
+
+"error format for JSLint
 set efm=Lint\ at\ line\ %l\ character\ %c:\ %m
 "use bash script to filter unwanted errors
 set makeprg=jslint\ %
@@ -108,7 +142,7 @@ function! s:ExtClass()
             call s:AppendLine("     <++>")
             call s:AppendLine(" });")
         else
-            call s:AppendLine(s:class_name . ".prototype = new " . s:class_extends ."();");
+            call s:AppendLine(s:class_name . ".prototype = new " . s:class_extends ."();")
         endif
     else
         "simplest case: use object literal
@@ -153,7 +187,7 @@ function! s:ExtProperty()
     call s:AppendLine("     * @type ".s:prop_type)
     call s:AppendLine("     */")
 
-    call s:AppendLine(s:prop_name . " :<++>,")
+    call s:AppendLine("    " . s:prop_name . " :<++>,")
 
 endfunction
 
@@ -241,3 +275,8 @@ function! s:ExpandTypeName(type_name)
         return t
 endfunction
 
+       
+let b:undo_ftplugin = "setl fo< ofu< com< cms<" 
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
