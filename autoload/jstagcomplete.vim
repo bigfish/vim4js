@@ -102,7 +102,7 @@ function! jstagcomplete#Complete(findstart, base)
             elseif stridx(tag['filename'], g:ExtSourcePath) > -1
                 if has_key(tag, 'link')
                     "help link is actually fully qualified class name
-                    let tag_meta = tag_meta .  '    > ' . tag['link']
+                    let tag_meta = tag_meta .  '    : ' . tag['link']
                 endif
             endif
             "add method signature if exists
@@ -110,6 +110,10 @@ function! jstagcomplete#Complete(findstart, base)
                 let result['word'] = tag['name'].tag['signature']
                 let result['abbr'] = tag['name'].tag['signature']
             endif
+			"add description info for preview
+			if has_key(tag, 'descr')
+				let result['info'] = tag['descr']
+			endif
 
             "add tag metadata
             let result['abbr'] = result['abbr'] . '   '.tag_meta
@@ -125,8 +129,8 @@ function! jstagcomplete#JavaScript(constraints, base, context)
     "Decho("jstagcomplete#JavaScript")
     "base is everything after last .
     "context is everything up to and including last dot
-"Decho("base: " . a:base)
-"Decho("context: " . a:context)
+	"Decho("base: " . a:base)
+	"Decho("context: " . a:context)
     ""trim whitespace (eg leading tab)
     let context = matchstr(a:context, '\s*\zs\S*')
 
@@ -151,7 +155,6 @@ function! jstagcomplete#JavaScript(constraints, base, context)
         let class_rx = tlib#rx#Escape(class)
         let a:constraints.class = class_rx
     endif
-
     let a:constraints.kind = 'mf'
     return a:constraints
 

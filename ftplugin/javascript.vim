@@ -120,32 +120,41 @@ function! s:ExtClass()
     let s:class_name = input("fully qualified class name: ")
     let s:class_descr = input("description: ")
     let s:class_extends = input("extends class: ")
-    
     "set cursor for appending lines
     let s:linenum = line(".")
 
     "start comment
     call s:AppendLine("/**")
     call s:AppendLine(" * @class ".s:class_name)
-    call s:AppendLine(" * @extends ".s:class_extends)
-    call s:AppendLine(" * ".s:class_descr)
-    call s:AppendLine(" */")
-    
-    
+
     if len(s:class_extends) > 0
         "allow shortcut types for extends
         let s:class_extends = s:ExpandTypeName(s:class_extends)
+        call s:AppendLine(" * @extends ".s:class_extends)
+    else
+        "all 'classes' implement Object.prototype
+        call s:AppendLine(" * @extends Object")
+    endif
+
+    if len(s:class_descr) > 0
+        call s:AppendLine(" * ".s:class_descr)
+    endif
+
+    call s:AppendLine(" */")
+    
+    "constructor function
+    if len(s:class_extends) > 0
         "if the extends class is an Ext class, use Ext.extend
         "else use prototype = new SuperClass()
         if s:class_extends =~ "Ext"
             call s:AppendLine(class_name . " = Ext.extend(" . s:class_extends .", {") 
             call s:AppendLine("     <++>")
-            call s:AppendLine(" });")
+            call s:AppendLine("});")
         else
             call s:AppendLine(s:class_name . ".prototype = new " . s:class_extends ."();")
         endif
     else
-        "simplest case: use object literal
+        "simkplest case: use object literal
         call s:AppendLine(s:class_name . " = {")
         call s:AppendLine("	<++>")
         call s:AppendLine("};")
@@ -187,7 +196,7 @@ function! s:ExtProperty()
     call s:AppendLine("     * @type ".s:prop_type)
     call s:AppendLine("     */")
 
-    call s:AppendLine("    " . s:prop_name . " :<++>,")
+    call s:AppendLine("    " . s:prop_name . " :<++>,<++>")
 
 endfunction
 
@@ -212,17 +221,34 @@ function! s:ExtMethod()
     "start comment
     call s:AppendLine("    /**")
     "append description
-    call s:AppendLine("     * ".s:meth_descr)
+    if len(s:meth_descr) > 0
+        call s:AppendLine("     * ".s:meth_descr)
+    endif
     "append parameters
     let s:params = []
     for p in range(1, s:num_params)
         let s:param_name = input("param ".p." name: ")
-        let s:param_type = input("param ".p." type: ")
-        call add(s:params, {'name' : s:param_name, 'type' : s:param_type})
+        "if name ends in ? it is optional
+        if match(s:param_name, "?$") > -1
+            let s:param_optional = "(optional)"
+            "strip off ? so it is not added in generated function
+            let s:param_name = strpart(s:param_name, 0, len(s:param_name) - 1)
+        else
+            let s:param_optional = ""
+        endif
+        "get type
+        let s:param_type = input("param '".s:param_name."' type: ")
+
         "expand type shortcuts
         let s:param_type = s:ExpandTypeName(s:param_type)
+
+        call add(s:params, {'name' : s:param_name, 'type' : s:param_type})
+
+        "get description 
+        let s:param_descr = input("param '". s:param_name."' description: ")
+
         "append line with param
-        call s:AppendLine("     * @param {".s:param_type."} ".s:param_name)
+        call s:AppendLine("     * @param {".s:param_type."} ".s:param_name.' '.s:param_optional.' '.s:param_descr)
     endfor
     "append return type
     let s:return_type = input("return type: ")
@@ -247,7 +273,9 @@ function! s:ExtMethod()
     "append line with jump marker
     call s:AppendLine("     <++>")
     "end function -- 
-    call s:AppendLine("     },")
+    call s:AppendLine("    },")
+    call s:AppendLine("	<++>")
+    
 endfunction
 
 function! s:AppendLine(newline)
@@ -271,6 +299,10 @@ function! s:ExpandTypeName(type_name)
             let t = "String"
         elseif t == "f"
             let t = "Function"
+        elseif t == "u"
+            let t = "undefined"
+        elseif t == "*"
+            let t = "any"
         endif
         return t
 endfunction
