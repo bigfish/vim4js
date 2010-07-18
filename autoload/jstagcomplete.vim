@@ -71,9 +71,10 @@ function! jstagcomplete#Complete(findstart, base)
         let context = strpart(line, 0, start)
 
         "1. attempt to do a contextual tag search by getting constraints
-        call jstagcomplete#JavaScript(constraints, a:base, context)
+        let constraints = jstagcomplete#JavaScript(constraints, a:base, context)
+		Decho('constraints.class:' . constraints.class)
         "get matching tags using constraints
-        let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
+		let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
 
         "if we don't get any results, try DOM or JSCore lookup without any constraints 
         if len(tags) == 0
@@ -126,6 +127,7 @@ endf
 
 "Javascript Complete
 function! jstagcomplete#JavaScript(constraints, base, context) 
+	let cons = a:constraints
     "Decho("jstagcomplete#JavaScript")
     "base is everything after last .
     "context is everything up to and including last dot
@@ -137,16 +139,12 @@ function! jstagcomplete#JavaScript(constraints, base, context)
     "override the name to be the fully qualified name (context)
     let fullname = context . a:base
     let name_rx = tlib#rx#Escape(a:base)
-    let a:constraints.name = name_rx
+    let cons.name = name_rx
     
     let baseObj = ""
-    "when called as tagComplete, we get the context without the base
-    "when called as skeletonComplete, we do not.. 
+    "get the last portion of a dotted word
     if stridx(context, '.') > 0
-        "remove everything after the last dot (including dot)
-        let baseObj = strpart(context, 0, strridx(context, '.'))
-        "now the last portion is the base object 
-        let baseObj = strpart(baseObj, strridx(baseObj, '.') + 1)
+		let baseObj = s:GetLastWord(context)
     else
         " no base: global 
 		" TODO: constrain to Global members
@@ -161,16 +159,16 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 		"it is probably a singleton (aka global) 
 		"but this has the risk of over constraining results
 		if match(baseObj, '^[A-Z]') > -1
-
 			let class_rx = tlib#rx#Escape(baseObj)
-			let a:constraints.class = class_rx
-
+			let cons.class = class_rx
 		else
 			"TODO: attempt to infer type of baseObj from context
 			"find the most recent assignment to this var
 			let assignRE = baseObj . '\s*=\s*\(.*\)'
 			"bn : search backwards and do not move cursor
 			let alnum = search(assignRE, 'bn')
+			"debug shortcut
+			let alnum = 0
 			if alnum
 				let aline = getline(alnum)
 				let assign = matchlist(aline, assignRE) 
@@ -178,11 +176,17 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 					"figure out the type which was assigned to the variable 
 					let val = assign[1]
 					"if the assingment value is an instantiation
+					"get the class which was instantiated
 					let rl = matchlist(val, 'new\s\([^(]*\)(')
 					if len(rl)
+						let full_class = rl[1]
+						"get last portion of class name in case it is compound
+						"eg Ext.Ajax.Request
+						let class_name = s:GetLastWord(full_class)
 						"we have found the class
-						let class_rx = tlib#rx#Escape(rl[1])
-						let a:constraints.class = class_rx
+						"let class_rx = tlib#rx#Escape(class_name)
+						let cons.class = class_name
+						"we are NOT interested in static methods in this case
 					endif
 				endif
 			endif
@@ -192,8 +196,21 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 		"we will do another search on all tags
     endif
 
-    let a:constraints.kind = 'mf'
-    return a:constraints
+    let cons.kind = 'mfv'
+	Decho("cons " . cons['name'])
+    return cons
 
 endfunction
 
+function! s:GetLastWord(dottedword)
+	let dotword = a:dottedword
+    if stridx(dotword, '.') > 0
+        "remove everything after the last dot (including dot)
+        let base = strpart(dotword, 0, strridx(dotword, '.'))
+        "now the last portion is the base object 
+        let lastword = strpart(base, strridx(base, '.') + 1)
+	else
+		let lastword = dotword
+	endif
+	return lastword
+endfunction
