@@ -139,22 +139,40 @@ function! jstagcomplete#JavaScript(constraints, base, context)
     let name_rx = tlib#rx#Escape(a:base)
     let a:constraints.name = name_rx
     
-    let class = ""
+    let baseObj = ""
     "when called as tagComplete, we get the context without the base
     "when called as skeletonComplete, we do not.. 
     if stridx(context, '.') > 0
         "remove everything after the last dot (including dot)
-        let class = strpart(context, 0, strridx(context, '.') - 1)
-        "no the class is the last portion
-        let class = strpart(class, strridx(class, '.') + 1)
+        let baseObj = strpart(context, 0, strridx(context, '.'))
+        "now the last portion is the base object 
+        let baseObj = strpart(baseObj, strridx(baseObj, '.') + 1)
     else
-        "global var
+        " no base: global 
+		" TODO: constrain to Global members
+		" or constructors
+		"let a:constraints.kind = 'f'
     endif
-    "Decho("class: " . class)
-    if class != ""
-        let class_rx = tlib#rx#Escape(class)
-        let a:constraints.class = class_rx
+
+	"Decho("baseObj: " . baseObj)
+
+    if len(baseObj) 
+		"if it starts with a capital letter
+		"it is probably a singleton (aka global) 
+		"but this has the risk of over constraining results
+		if match(baseObj, '^[A-Z]') > -1
+
+			let class_rx = tlib#rx#Escape(baseObj)
+			let a:constraints.class = class_rx
+
+		else
+			"TODO: attempt to infer type of baseObj from context
+		endif
+
+		"Note: if no results are found
+		"we will do another search on all tags
     endif
+
     let a:constraints.kind = 'mf'
     return a:constraints
 
