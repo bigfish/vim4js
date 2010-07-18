@@ -167,6 +167,25 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 
 		else
 			"TODO: attempt to infer type of baseObj from context
+			"find the most recent assignment to this var
+			let assignRE = baseObj . '\s*=\s*\(.*\)'
+			"bn : search backwards and do not move cursor
+			let alnum = search(assignRE, 'bn')
+			if alnum
+				let aline = getline(alnum)
+				let assign = matchlist(aline, assignRE) 
+				if len(assign)
+					"figure out the type which was assigned to the variable 
+					let val = assign[1]
+					"if the assingment value is an instantiation
+					let rl = matchlist(val, 'new\s\([^(]*\)(')
+					if len(rl)
+						"we have found the class
+						let class_rx = tlib#rx#Escape(rl[1])
+						let a:constraints.class = class_rx
+					endif
+				endif
+			endif
 		endif
 
 		"Note: if no results are found
