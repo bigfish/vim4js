@@ -72,7 +72,6 @@ function! jstagcomplete#Complete(findstart, base)
 
         "1. attempt to do a contextual tag search by getting constraints
         let constraints = jstagcomplete#JavaScript(constraints, a:base, context)
-		Decho('constraints.class:' . constraints.class)
         "get matching tags using constraints
 		let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
 
@@ -152,8 +151,6 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 		"let a:constraints.kind = 'f'
     endif
 
-	"Decho("baseObj: " . baseObj)
-
     if len(baseObj) 
 		"if it starts with a capital letter
 		"it is probably a singleton (aka global) 
@@ -197,7 +194,6 @@ function! jstagcomplete#JavaScript(constraints, base, context)
     endif
 
     let cons.kind = 'mfv'
-	Decho("cons " . cons['name'])
     return cons
 
 endfunction
