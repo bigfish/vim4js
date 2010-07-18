@@ -45,6 +45,9 @@ set makeprg=jslint\ %
 let g:HTMLSpecUrl = "http://html5/index.html"
 let g:ExtDocUrl = "http://extdocs/docs/?class="
 
+"used in templates, default to false
+let s:class_singleton = 0
+
 if !hasmapto('<Plug>JSOpenDomDoc')
 	map <Leader>d <Plug>JSOpenDomDoc
 endif
@@ -120,6 +123,9 @@ function! s:ExtClass()
     let s:class_name = input("fully qualified class name: ")
     let s:class_descr = input("description: ")
     let s:class_extends = input("extends class: ")
+    let s:class_singleton = input("is singleton ? [No]: ")
+
+
     "set cursor for appending lines
     let s:linenum = line(".")
 
@@ -127,6 +133,20 @@ function! s:ExtClass()
     call s:AppendLine("/**")
     call s:AppendLine(" * @class ".s:class_name)
 
+	"description
+    if len(s:class_descr) > 0
+        call s:AppendLine(" * ".s:class_descr)
+    endif
+
+	"singleton: default is no
+	if len(s:class_singleton) > 0
+		let s:class_singleton = 1
+		call s:AppendLine(" * @singeleton")
+	else
+		let s:class_singleton = 0
+	endif
+
+	"inheritance
     if len(s:class_extends) > 0
         "allow shortcut types for extends
         let s:class_extends = s:ExpandTypeName(s:class_extends)
@@ -136,30 +156,29 @@ function! s:ExtClass()
         call s:AppendLine(" * @extends Object")
     endif
 
-    if len(s:class_descr) > 0
-        call s:AppendLine(" * ".s:class_descr)
-    endif
-
+	"close doc comment
     call s:AppendLine(" */")
-    
+	
     "constructor function
-    if len(s:class_extends) > 0
-        "if the extends class is an Ext class, use Ext.extend
-        "else use prototype = new SuperClass()
-        if s:class_extends =~ "Ext"
-            call s:AppendLine(class_name . " = Ext.extend(" . s:class_extends .", {") 
-            call s:AppendLine("     <++>")
-            call s:AppendLine("});")
-        else
-            call s:AppendLine(s:class_name . ".prototype = new " . s:class_extends ."();")
-        endif
-    else
-        "simkplest case: use object literal
-        call s:AppendLine(s:class_name . " = {")
-        call s:AppendLine("	<++>")
-        call s:AppendLine("};")
-    endif
+	"default = Object
+    if len(s:class_extends) == 0
+		let s:class_extends = "Object"
+	endif
 
+	"singletons are simply object literals
+	if s:class_singleton
+		call s:AppendLine(s:class_name . " = {" 
+		call s:AppendLine("     <++>")
+		call s:AppendLine("};")
+	else
+		"using Ext.extend ..
+		"TODO: allow library to be
+		"configurable, to use Dojo, YUI, JQuery, or whatever
+		"native inheritance is a bit awkward to templatize :(
+		call s:AppendLine(s:class_name . " = Ext.extend(" . s:class_extends .", {") 
+		call s:AppendLine("     <++>")
+		call s:AppendLine("});")
+	endif
 
 endfunction
 "/**
@@ -181,8 +200,25 @@ endif
 function! s:ExtProperty()
 
     let s:prop_name = input("prop name: ")
-    let s:prop_descr = input("description: ")
-    let s:prop_type = input("prop type: ")
+    let s:prop_descr = input("'" . s:prop_name . "' description: ")
+    let s:prop_type = input("'" . s:prop_name . "' type: ")
+
+	"properties are static by default if class is singleton
+	if s:class_singleton
+		let s:prop_static = 1
+		"any input changes the default (typically this will be 'n' or 'no')
+		let s:prop_static_in = input("'" . s:prop_name . "' is static property? [Yes]: ")
+		if len(s:prop_static)
+			let s:prop_static = 0
+		endif
+	else
+		let s:prop_static = 0
+		"any input changes the default (typically this will be 'y' or 'yes')
+		let s:prop_static_in = input("'" . s:prop_name . "' is static property? [No]: ")
+		if len(s:prop_static_in)
+			let s:prop_static = 1
+		endif
+	endif
     
     "expand type shortcuts
     let s:prop_type = s:ExpandTypeName(s:prop_type)
@@ -254,6 +290,28 @@ function! s:ExtMethod()
     let s:return_type = input("return type: ")
     let s:return_type = s:ExpandTypeName(s:return_type)
     call s:AppendLine("     * @return {".s:return_type."}")
+
+	"properties are static by default if class is singleton
+	"it is very rare one would override the default
+	if s:class_singleton
+		let s:meth_static = 1
+		"any input changes the default (typically this will be 'n' or 'no')
+		let s:meth_static_in = input("'" . s:meth_name . "' is static method? [Yes]: ")
+		if len(s:meth_static)
+			let s:meth_static = 0
+		else
+			call s:AppendLine("     * @static")
+		endif
+	else
+		let s:meth_static = 0
+		"any input changes the default (typically this will be 'y' or 'yes')
+		let s:meth_static_in = input("'" . s:meth_name . "' is static method? [No]: ")
+		if len(s:meth_static_in)
+			let s:meth_static = 1
+			call s:AppendLine("     * @static")
+		endif
+	endif
+
     "end comment
     call s:AppendLine("     */")
     "construct method declaration
@@ -274,7 +332,7 @@ function! s:ExtMethod()
     call s:AppendLine("     <++>")
     "end function -- 
     call s:AppendLine("    },")
-    call s:AppendLine("	<++>")
+    call s:AppendLine("	 <++>")
     
 endfunction
 
