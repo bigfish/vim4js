@@ -69,18 +69,25 @@ function! jstagcomplete#Complete(findstart, base)
         let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
         let constraints.name = tlib#rx#Escape(a:base)
         let context = strpart(line, 0, start)
-
+		let s:found_context = 0
         "1. attempt to do a contextual tag search by getting constraints
         let constraints = jstagcomplete#JavaScript(constraints, a:base, context)
         "get matching tags using constraints
 		let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
+		"fallback
+        "if we did find the context (type) and we don't get any results,
+		"try DOM or JSCore lookup without any constraints 
 
-        "if we don't get any results, try DOM or JSCore lookup without any constraints 
-        if len(tags) == 0
-            let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
-            let constraints.name = tlib#rx#Escape(a:base)
-            let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
-        endif
+        if s:found_context 
+			"show no completions since we have not found any and we know the
+			"context (type) of the base object
+		else
+			if len(tags) == 0
+				let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
+				let constraints.name = tlib#rx#Escape(a:base)
+				let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
+			endif
+		endif
 
         "augment tags with preview and kind info
         let results = []
@@ -111,8 +118,14 @@ function! jstagcomplete#Complete(findstart, base)
                 let result['abbr'] = tag['name'].tag['signature']
             endif
 			"add description info for preview
-			if has_key(tag, 'descr')
-				let result['info'] = tag['descr']
+			if has_key(tag, 'info')
+				"info is filename|line-number
+				let info_lst = split(tag['info'], '|')
+				let infofile = info_lst[0]
+				let infoline = info_lst[1]
+				let cmd = "head -".infoline." ".infofile." | tail -1"
+				let descr = system(cmd)
+				let result['info'] = descr
 			endif
 
             "add tag metadata
@@ -158,6 +171,8 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 		if match(baseObj, '^[A-Z]') > -1
 			let class_rx = tlib#rx#Escape(baseObj)
 			let cons.class = class_rx
+			let cons.isstatic = tlib#rx#Escape("yes")
+			let s:found_context = 1
 		else
 			"TODO: attempt to infer type of baseObj from context
 			"find the most recent assignment to this var
@@ -165,7 +180,6 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 			"bn : search backwards and do not move cursor
 			let alnum = search(assignRE, 'bn')
 			"debug shortcut
-			let alnum = 0
 			if alnum
 				let aline = getline(alnum)
 				let assign = matchlist(aline, assignRE) 
@@ -181,9 +195,11 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 						"eg Ext.Ajax.Request
 						let class_name = s:GetLastWord(full_class)
 						"we have found the class
-						"let class_rx = tlib#rx#Escape(class_name)
-						let cons.class = class_name
+						let class_rx = tlib#rx#Escape(class_name)
+						let cons.class = class_rx
 						"we are NOT interested in static methods in this case
+						let cons.isstatic = tlib#rx#Escape("no")
+						let s:found_context = 1
 					endif
 				endif
 			endif
