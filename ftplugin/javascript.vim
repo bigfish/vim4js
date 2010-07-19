@@ -47,6 +47,7 @@ let g:ExtDocUrl = "http://extdocs/docs/?class="
 
 "used in templates, default to false
 let s:class_singleton = 0
+let s:global = 0
 
 if !hasmapto('<Plug>JSOpenDomDoc')
 	map <Leader>d <Plug>JSOpenDomDoc
@@ -196,7 +197,7 @@ endfunction
  "* <p>This class encapsulates a <i>collection</i> of DOM elements, providing methods to filter
 "Ext Property
 if !hasmapto('<Plug>ExtProperty')
-	map <c-p> <Plug>ExtProperty
+	map <Leader>p <Plug>ExtProperty
 endif
 
 noremap <script> <Plug>ExtProperty <SID>ExtProperty
@@ -212,6 +213,10 @@ function! JSExtMethod()
 	return ""
 endfunction
 
+function! JSExtProperty()
+	call s:ExtProperty()
+	return ""
+endfunction
 "this function should be invoked after entering a property declaration with
 "type-annotations, eg 
 "	foo:s : "foo",
@@ -220,7 +225,7 @@ function! s:ExtProperty()
 
     "set cursor for appending lines
     let s:linenum = line(".")
-	let s:curline = getline(line("."))
+	let s:curline = getline(s:linenum)
 	"now set the insert position to the line above the current one
 	let s:linenum -= 1
 	"get the first name:Type occurrence -- note the type must not be separated from the
@@ -250,8 +255,11 @@ function! s:ExtProperty()
 		call s:AppendLine(s:indent . " * @static ")
 	endif
     call s:AppendLine(s:indent . " */")
+
 	"remove type annotations
-	let newline = substitute(line, '\([A-Za-z_$]\+\)?\?:[A-Za-z_$\?\*]\+', '\1','g')
+	let line = getline(line("."))
+	let newline = substitute(line, '\([A-Za-z_$]\+\):[A-Za-z_$]\+', '\1','g')
+	call setline(line("."),newline)
 
 endfunction
 
@@ -297,7 +305,7 @@ function! s:ExtMethod()
     "start comment
 	call s:AppendLine("")
     call s:AppendLine(s:indent . "/**")
-	call s:AppendLine(s:indent . " *<+description+>")
+	call s:AppendLine(s:indent . " * <+description+>")
 
 	"if we have any params
 	if len(s:meth_sig) 
@@ -328,9 +336,17 @@ function! s:ExtMethod()
 
 	"strip off  type annotations and ? or *
 	let line = getline(line("."))
-	let newline = substitute(line, '\([A-Za-z_$]\+\)?\?:[A-Za-z_$]\+', '\1','g')
-	let newline = substitute(newline, ')\zs:[A-Za-z_$]\+', '','g')
+	let newline = s:CleanLine(line)
 	call setline(line("."),newline)
+
+endfunction
+
+"remove type annotations and quantifiers (make legal JavaScript)
+function! s:CleanLine(line)
+
+	let newline = substitute(a:line, '\([A-Za-z_$]\+\)?\?\*\?:[A-Za-z_$]\+', '\1','g')
+	let newline = substitute(newline, ')\zs:[A-Za-z_$]\+', '','g')
+	return newline
 
 endfunction
 
@@ -346,13 +362,13 @@ function! s:ProcessParam(param)
 		else
 			let s:param_optional = ""
 		endif
-
+		"leavae * on end of name for rest params
 		"if name ends in * it is multiple
-		if match(s:param_name, "\*$") > -1
-			let s:param_multiple = "..."
-		else
-			let s:param_multiple = ""
-		endif
+		"if match(s:param_name, "\*$") > -1
+			"let s:param_multiple = "..."
+		"else
+			"let s:param_multiple = ""
+		"endif
 
 		"get type
 		let s:param_type = pl[1]
@@ -363,7 +379,8 @@ function! s:ProcessParam(param)
 	"expand type shortcuts
 	let s:param_type = s:ExpandTypeName(s:param_type)
 	"append line with param
-	call s:AppendLine(s:indent . " * @param {".s:param_type."} ".s:param_name.s:param_multiple.' '.s:param_optional.' <+description+>')
+	"call s:AppendLine(s:indent . " * @param {".s:param_type."} ".s:param_name.s:param_multiple.' '.s:param_optional.' <+description+>')
+	call s:AppendLine(s:indent . " * @param {".s:param_type."} ".s:param_name.' '.s:param_optional.' <+description+>')
 endfunction
 
 function! s:AppendLine(newline)
