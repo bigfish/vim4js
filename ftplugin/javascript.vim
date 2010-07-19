@@ -121,10 +121,17 @@ endif
 function! s:ExtClass()
 
     let s:class_name = input("fully qualified class name: ")
+	if s:class_name == "Global"
+		let s:global = 1
+		let s:singleton = 1
+		"ie: don't allow global symbols as members of other objects
+	endif
     let s:class_descr = input("description: ")
-    let s:class_extends = input("extends class: ")
-    let s:class_singleton = input("is singleton ? [No]: ")
-
+	"skip extends and singleton questions for Global vars / functions
+	if !s:global
+		let s:class_extends = input("extends class: ")
+		let s:class_singleton = input("is singleton ? [No]: ")
+	endif
 
     "set cursor for appending lines
     let s:linenum = line(".")
@@ -166,7 +173,9 @@ function! s:ExtClass()
 	endif
 
 	"singletons are simply object literals
-	if s:class_singleton
+	if s:global
+		"do not insert a constructor or container object literal
+	elseif s:class_singleton
 		call s:AppendLine(s:class_name . " = {")
 		call s:AppendLine("     <++>")
 		call s:AppendLine("};")
