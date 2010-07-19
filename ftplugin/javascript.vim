@@ -141,7 +141,7 @@ function! s:ExtClass()
 	"singleton: default is no
 	if len(s:class_singleton) > 0
 		let s:class_singleton = 1
-		call s:AppendLine(" * @singeleton")
+		call s:AppendLine(" * @singleton")
 	else
 		let s:class_singleton = 0
 	endif
@@ -150,7 +150,7 @@ function! s:ExtClass()
     if len(s:class_extends) > 0
         "allow shortcut types for extends
         let s:class_extends = s:ExpandTypeName(s:class_extends)
-        call s:AppendLine(" * @extends ".s:class_extends)
+        call s:AppendLine(" * @extends " . s:class_extends)
     else
         "all 'classes' implement Object.prototype
         call s:AppendLine(" * @extends Object")
@@ -167,7 +167,7 @@ function! s:ExtClass()
 
 	"singletons are simply object literals
 	if s:class_singleton
-		call s:AppendLine(s:class_name . " = {" 
+		call s:AppendLine(s:class_name . " = {")
 		call s:AppendLine("     <++>")
 		call s:AppendLine("};")
 	else
@@ -187,7 +187,7 @@ endfunction
  "* <p>This class encapsulates a <i>collection</i> of DOM elements, providing methods to filter
 "Ext Property
 if !hasmapto('<Plug>ExtProperty')
-	map <Leader>p <Plug>ExtProperty
+	map <c-p> <Plug>ExtProperty
 endif
 
 noremap <script> <Plug>ExtProperty <SID>ExtProperty
@@ -197,42 +197,51 @@ if !exists(":ExtProperty")
 	command ExtProperty :call s:ExtProperty()
 endif
 
+"global functions to be used in snippets
+function! JSExtMethod()
+	call s:ExtMethod()
+	return ""
+endfunction
+
+"this function should be invoked after entering a property declaration with
+"type-annotations, eg 
+"	foo:s : "foo",
+
 function! s:ExtProperty()
 
-    let s:prop_name = input("prop name: ")
-    let s:prop_descr = input("'" . s:prop_name . "' description: ")
-    let s:prop_type = input("'" . s:prop_name . "' type: ")
+    "set cursor for appending lines
+    let s:linenum = line(".")
+	let s:curline = getline(line("."))
+	"now set the insert position to the line above the current one
+	let s:linenum -= 1
+	"get the first name:Type occurrence -- note the type must not be separated from the
+	"name by any white space
+	let pml = matchlist(s:curline, '^\(\s*\)\([A-Za-z_$]*\):\([A-Za-z_$]*\)')
 
-	"properties are static by default if class is singleton
-	if s:class_singleton
-		let s:prop_static = 1
-		"any input changes the default (typically this will be 'n' or 'no')
-		let s:prop_static_in = input("'" . s:prop_name . "' is static property? [Yes]: ")
-		if len(s:prop_static)
-			let s:prop_static = 0
-		endif
-	else
-		let s:prop_static = 0
-		"any input changes the default (typically this will be 'y' or 'yes')
-		let s:prop_static_in = input("'" . s:prop_name . "' is static property? [No]: ")
-		if len(s:prop_static_in)
-			let s:prop_static = 1
-		endif
+	if len(pml) == 0
+
+		Decho("line does not match property template")
+		return
 	endif
+
+	let s:indent = pml[1]
+	let s:prop_name = pml[2]
+    let s:prop_type = pml[3]
     
     "expand type shortcuts
     let s:prop_type = s:ExpandTypeName(s:prop_type)
 
-    "set cursor for appending lines
-    let s:linenum = line(".")
-
     "start comment
-    call s:AppendLine("    /**")
-    call s:AppendLine("     * ".s:prop_descr)
-    call s:AppendLine("     * @type ".s:prop_type)
-    call s:AppendLine("     */")
-
-    call s:AppendLine("    " . s:prop_name . " :<++>,<++>")
+    call s:AppendLine(s:indent . "/**")
+    call s:AppendLine(s:indent . " *<+description+>")
+    call s:AppendLine(s:indent . " * @type ".s:prop_type)
+	"properties are static by default in singletons
+	if s:class_singleton
+		call s:AppendLine(s:indent . " * @static ")
+	endif
+    call s:AppendLine(s:indent . " */")
+	"remove type annotations
+	let newline = substitute(line, '\([A-Za-z_$]\+\)?\?:[A-Za-z_$\?\*]\+', '\1','g')
 
 endfunction
 
@@ -249,91 +258,101 @@ if !exists(":ExtMethod")
 endif
 
 function! s:ExtMethod()
-    let s:meth_name = input("method name: ")
-    let s:meth_descr = input("description: ")
-    let s:num_params = input("# params: ")
+
     "set cursor for appending lines
     let s:linenum = line(".")
-    "start comment
-    call s:AppendLine("    /**")
-    "append description
-    if len(s:meth_descr) > 0
-        call s:AppendLine("     * ".s:meth_descr)
-    endif
-    "append parameters
-    let s:params = []
-    for p in range(1, s:num_params)
-        let s:param_name = input("param ".p." name: ")
-        "if name ends in ? it is optional
-        if match(s:param_name, "?$") > -1
-            let s:param_optional = "(optional)"
-            "strip off ? so it is not added in generated function
-            let s:param_name = strpart(s:param_name, 0, len(s:param_name) - 1)
-        else
-            let s:param_optional = ""
-        endif
-        "get type
-        let s:param_type = input("param '".s:param_name."' type: ")
+	let s:curline = getline(line("."))
+	"now set the insert position to the line above the current one
+	let s:linenum -= 1
+	"match the method template pattern
+	let mml = matchlist(s:curline, '^\(\s*\)\([A-Za-z_$]*\)\s*[:=]\s*function\s\?(\([^)]*\)):\([A-Za-z_$]*\)')
+	"check that we got a match, otherwise return
+	if len(mml) == 0
 
-        "expand type shortcuts
-        let s:param_type = s:ExpandTypeName(s:param_type)
+		"try an old fashioned function declaration
+		let mml = matchlist(s:curline, '^\(\s*\)function\s\?\([A-Za-z_$]*\)\s\?(\([^)]*\)):\([A-Za-z_$]*\)')
 
-        call add(s:params, {'name' : s:param_name, 'type' : s:param_type})
-
-        "get description 
-        let s:param_descr = input("param '". s:param_name."' description: ")
-
-        "append line with param
-        call s:AppendLine("     * @param {".s:param_type."} ".s:param_name.' '.s:param_optional.' '.s:param_descr)
-    endfor
-    "append return type
-    let s:return_type = input("return type: ")
-    let s:return_type = s:ExpandTypeName(s:return_type)
-    call s:AppendLine("     * @return {".s:return_type."}")
-
-	"properties are static by default if class is singleton
-	"it is very rare one would override the default
-	if s:class_singleton
-		let s:meth_static = 1
-		"any input changes the default (typically this will be 'n' or 'no')
-		let s:meth_static_in = input("'" . s:meth_name . "' is static method? [Yes]: ")
-		if len(s:meth_static)
-			let s:meth_static = 0
-		else
-			call s:AppendLine("     * @static")
+		if len(mml) == 0
+			"give up
+			Decho("line does not match method template")
+			return
 		endif
-	else
-		let s:meth_static = 0
-		"any input changes the default (typically this will be 'y' or 'yes')
-		let s:meth_static_in = input("'" . s:meth_name . "' is static method? [No]: ")
-		if len(s:meth_static_in)
-			let s:meth_static = 1
-			call s:AppendLine("     * @static")
-		endif
+
 	endif
 
+    let s:indent = mml[1]
+    let s:meth_name = mml[2]
+	let s:meth_sig = mml[3]
+	let s:return_type = mml[4]
+    "start comment
+    call s:AppendLine(s:indent . "/**")
+	call s:AppendLine(s:indent . " *<+description+>")
+
+	"if we have any params
+	if len(s:meth_sig) 
+		"if we have multiple params
+		if stridx(s:meth_sig, ',') > -1
+
+			"split signature into parameters
+			let s:params = split(s:meth_sig, ',\s\?')
+
+			"append parameters
+			for p in range(0, len(s:params) - 1)
+				call s:ProcessParam(s:params[p])
+			endfor
+		else
+			"single param
+			call s:ProcessParam(s:meth_sig)
+		endif
+			
+	endif
+    let s:return_type = s:ExpandTypeName(s:return_type)
+    call s:AppendLine(s:indent . " * @return {".s:return_type."} <+description+>")
+	"properties are static by default if class is singleton 
+	if s:class_singleton
+		call s:AppendLine(s:indent . " * @static")
+	endif
     "end comment
-    call s:AppendLine("     */")
-    "construct method declaration
-    let s:method = "    ".s:meth_name." : function ("
-    let isfirst = 1
-    for param in s:params
-        if isfirst
-            let s:method .= param['name']
-            let isfirst = 0
-        else
-            let s:method =  s:method . ', ' . param['name'] 
-        endif
-    endfor
-    let s:method .= ") {"
-    "append first line of declaration
-    call s:AppendLine(s:method)
-    "append line with jump marker
-    call s:AppendLine("     <++>")
-    "end function -- 
-    call s:AppendLine("    },")
-    call s:AppendLine("	 <++>")
+    call s:AppendLine(s:indent . " */")
+
+	"strip off  type annotations and ? or *
+	let line = getline(line("."))
+	let newline = substitute(line, '\([A-Za-z_$]\+\)?\?:[A-Za-z_$]\+', '\1','g')
+	let newline = substitute(newline, ')\zs:[A-Za-z_$]\+', '','g')
+	call setline(line("."),newline)
     
+endfunction
+
+function! s:ProcessParam(param)
+	let param = a:param	
+	let pl = split(param, ':')
+	if len(pl) == 2
+		let s:param_name = pl[0]
+
+		"if name ends in ? it is optional
+		if match(s:param_name, "?$") > -1
+			let s:param_optional = "(optional)"
+		else
+			let s:param_optional = ""
+		endif
+
+		"if name ends in * it is multiple
+		if match(s:param_name, "\*$") > -1
+			let s:param_multiple = "..."
+		else
+			let s:param_multiple = ""
+		endif
+
+		"get type
+		let s:param_type = pl[1]
+	else
+		Decho("parameter does not have type annotation")
+		return
+	endif
+	"expand type shortcuts
+	let s:param_type = s:ExpandTypeName(s:param_type)
+	"append line with param
+	call s:AppendLine(s:indent . " * @param {".s:param_type."} ".s:param_name.s:param_multiple.' '.s:param_optional.' <+description+>')
 endfunction
 
 function! s:AppendLine(newline)

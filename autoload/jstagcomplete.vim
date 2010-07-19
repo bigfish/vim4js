@@ -14,7 +14,11 @@ if &cp || exists("loaded_jstagcomplete_autoload")
     finish
 endif
 let loaded_jstagcomplete_autoload = 1
-
+"set previewheight as only single line is ever shown
+:set pvh=3
+"close preview window with ctrl-p
+"todo - close automatically
+nmap <c-p> :pc<cr>
 "take note of paths to check for in tag results to use as constraints
 "obviously these environment vars must be set to the same values as in the
 "tags themselves
