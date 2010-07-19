@@ -232,8 +232,9 @@ function! s:ExtProperty()
     let s:prop_type = s:ExpandTypeName(s:prop_type)
 
     "start comment
+	call s:AppendLine("")
     call s:AppendLine(s:indent . "/**")
-    call s:AppendLine(s:indent . " *<+description+>")
+    call s:AppendLine(s:indent . " * <+description+>")
     call s:AppendLine(s:indent . " * @type ".s:prop_type)
 	"properties are static by default in singletons
 	if s:class_singleton
@@ -258,7 +259,7 @@ if !exists(":ExtMethod")
 endif
 
 function! s:ExtMethod()
-
+	
     "set cursor for appending lines
     let s:linenum = line(".")
 	let s:curline = getline(line("."))
@@ -285,6 +286,7 @@ function! s:ExtMethod()
 	let s:meth_sig = mml[3]
 	let s:return_type = mml[4]
     "start comment
+	call s:AppendLine("")
     call s:AppendLine(s:indent . "/**")
 	call s:AppendLine(s:indent . " *<+description+>")
 
@@ -320,7 +322,7 @@ function! s:ExtMethod()
 	let newline = substitute(line, '\([A-Za-z_$]\+\)?\?:[A-Za-z_$]\+', '\1','g')
 	let newline = substitute(newline, ')\zs:[A-Za-z_$]\+', '','g')
 	call setline(line("."),newline)
-    
+
 endfunction
 
 function! s:ProcessParam(param)
