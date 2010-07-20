@@ -19,9 +19,9 @@ set cpo&vim
 setlocal formatoptions-=t formatoptions+=croql
 
 " Set completion with CTRL-X CTRL-O to autoloaded function.
-if exists('&ofu')
-    setlocal omnifunc=javascriptcomplete#CompleteJS
-endif
+"if exists('&ofu')
+    "setlocal omnifunc=javascriptcomplete#CompleteJS
+"endif
 
 " Set 'comments' to format dashed lists in comments.
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
@@ -48,6 +48,9 @@ let g:ExtDocUrl = "http://extdocs/docs/?class="
 "used in templates, default to false
 let s:class_singleton = 0
 let s:global = 0
+
+"make folds manual to auto fold comments
+"setlocal foldmethod=manual
 
 if !hasmapto('<Plug>JSOpenDomDoc')
 	map <Leader>d <Plug>JSOpenDomDoc
@@ -412,6 +415,70 @@ function! s:ExpandTypeName(type_name)
         return t
 endfunction
 
+function! JSSelectBlockComment()
+	let s:startComment = search('^\s*/\*','bcW')
+	if s:startComment
+		"start linewise visual mode
+		normal V
+		"if we found a start of a multiline comment, find the end
+		call search('\*/','cW')
+	endif
+
+endfunction
+
+function! JSDeleteBlockComment()
+	call JSSelectBlockComment()
+	normal d
+endfunction
+
+setlocal fillchars='fold:'
+
+"customize folds
+function! JSFoldText()
+	"return getline(v:foldstart + 1);
+    let line = getline(v:foldstart + 1)
+    "let sub = substitute(line, '@', '', 'g')
+    "return v:folddashes . sub
+    return line
+endfunction
+
+setl foldtext=JSFoldText()
+
+if !exists(":JSFoldDocComments")
+	command JSFoldDocComments :call s:JSFoldDocComments()
+endif
+
+function! s:JSFoldDocComments() 
+	
+	"remember position
+	normal mp
+	normal gg
+	"cannot create or erase folds with syntax folding
+	"normal zE
+
+	"search forwards
+	let s:startComment =  search('/\*\*','cW')
+	while  s:startComment
+		"set foldtext to next line of comment, usually a description
+		"find matching end of comment
+		"NB must be at end of line
+		"this is to avoid matching this pattern in regexp
+		let s:endComment = search('\*/\s*$','W')
+		"dont fold single lines
+		if s:endComment && s:endComment > s:startComment 
+			"with syntax folding (in syntax/javascript.vim)
+			"all we have to do is close the fold
+			normal zc
+			"exec s:startComment . ',' . s:endComment . 'fold'
+		endif
+		"look for next one
+		let s:startComment = search('/\*\*','W')
+	endwhile
+
+	"restore pos
+	normal 'p
+
+endfunction
        
 let b:undo_ftplugin = "setl fo< ofu< com< cms<" 
 
