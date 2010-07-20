@@ -444,6 +444,13 @@ endfunction
 
 setl foldtext=JSFoldText()
 
+if !hasmapto('<Plug>JSFoldDocComments')
+	map <Leader>cc <Plug>JSFoldDocComments
+endif
+
+noremap <script> <Plug>JSFoldDocComments <SID>JSFoldDocComments
+noremap <SID>JSFoldDocComments :call <SID>JSFoldDocComments()<CR>
+
 if !exists(":JSFoldDocComments")
 	command JSFoldDocComments :call s:JSFoldDocComments()
 endif
