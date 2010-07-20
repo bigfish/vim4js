@@ -431,7 +431,7 @@ function! JSDeleteBlockComment()
 	normal d
 endfunction
 
-setlocal fillchars='fold:'
+setlocal fillchars="vert:,fold:"
 
 "customize folds
 function! JSFoldText()
