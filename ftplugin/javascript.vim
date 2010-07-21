@@ -18,17 +18,12 @@ set cpo&vim
 " and insert the comment leader when hitting <CR> or using "o".
 setlocal formatoptions-=t formatoptions+=croql
 
-" Set completion with CTRL-X CTRL-O to autoloaded function.
-"if exists('&ofu')
-    "setlocal omnifunc=javascriptcomplete#CompleteJS
-"endif
-
 " Set 'comments' to format dashed lists in comments.
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
 
 setlocal commentstring=//%s
 
-" Change the :browse e filter to primarily show Java-related files.
+" Change the :browse e filter to primarily show Javascript-related files.
 if has("gui_win32")
     let  b:browsefilter="Javascript Files (*.js)\t*.js\n"
 		\	"All Files (*.*)\t*.*\n"
@@ -38,7 +33,6 @@ endif
 
 "error format for JSLint
 set efm=Lint\ at\ line\ %l\ character\ %c:\ %m
-"use bash script to filter unwanted errors
 set makeprg=jslint\ %
 
 "DOM docs
@@ -49,8 +43,14 @@ let g:ExtDocUrl = "http://extdocs/docs/?class="
 let s:class_singleton = 0
 let s:global = 0
 
-"make folds manual to auto fold comments
-"setlocal foldmethod=manual
+"expand tabs to 4 spaces
+setlocal expandtab
+setlocal shiftwidth=4
+
+"js(b)eautify -- for some reason this opens folded comments
+nnoremap <silent> <leader>b :call JSBeautify()<cr>
+
+"cleanAndSave
 
 if !hasmapto('<Plug>JSOpenDomDoc')
 	map <Leader>d <Plug>JSOpenDomDoc
@@ -210,6 +210,18 @@ if !exists(":ExtProperty")
 	command ExtProperty :call s:ExtProperty()
 endif
 
+"var which is a considered a property
+if !hasmapto('<Plug>ExtVar')
+	map <Leader>v <Plug>ExtVar
+endif
+
+noremap <script> <Plug>ExtVar <SID>ExtVar
+noremap <SID>ExtVar :call <SID>ExtVar()<CR>
+
+if !exists(":ExtVar")
+	command ExtVar :call s:ExtVar()
+endif
+
 "global functions to be used in snippets
 function! JSExtMethod()
 	call s:ExtMethod()
@@ -220,6 +232,12 @@ function! JSExtProperty()
 	call s:ExtProperty()
 	return ""
 endfunction
+
+function! JSExtVar()
+	call s:ExtVar()
+	return ""
+endfunction
+
 "this function should be invoked after entering a property declaration with
 "type-annotations, eg 
 "	foo:s : "foo",
@@ -238,6 +256,48 @@ function! s:ExtProperty()
 	if len(pml) == 0
 
 		Decho("line does not match property template")
+		return
+	endif
+
+	let s:indent = pml[1]
+	let s:prop_name = pml[2]
+    let s:prop_type = pml[3]
+    
+    "expand type shortcuts
+    let s:prop_type = s:ExpandTypeName(s:prop_type)
+
+    "start comment
+	call s:AppendLine("")
+    call s:AppendLine(s:indent . "/**")
+    call s:AppendLine(s:indent . " * <+description+>")
+    call s:AppendLine(s:indent . " * @type ".s:prop_type)
+	"properties are static by default in singletons
+	if s:class_singleton
+		call s:AppendLine(s:indent . " * @static ")
+	endif
+    call s:AppendLine(s:indent . " */")
+
+	"remove type annotations
+	let line = getline(line("."))
+	let newline = substitute(line, '\([A-Za-z_$]\+\):[A-Za-z_$]\+', '\1','g')
+	call setline(line("."),newline)
+
+endfunction
+
+function! s:ExtVar()
+
+    "set cursor for appending lines
+    let s:linenum = line(".")
+	let s:curline = getline(s:linenum)
+	"now set the insert position to the line above the current one
+	let s:linenum -= 1
+	"get the first name:Type occurrence -- note the type must not be separated from the
+	"name by any white space
+	let pml = matchlist(s:curline, '^\(\s*\)var\s\+\([A-Za-z_$]*\):\([A-Za-z_$]*\)')
+
+	if len(pml) == 0
+
+		Decho("line does not match var template")
 		return
 	endif
 
@@ -486,7 +546,27 @@ function! s:JSFoldDocComments()
 	normal 'p
 
 endfunction
-       
+
+"when saving file, run jsbeautify and jslint
+function! JSSave()
+	call JSBeautify()
+	call JSLint()
+	"replace all hard tabs with spaces
+	retab
+	exec 'w'
+endfunction
+"wrapper to run jslint temporarily as make program 
+"in case makeprg is being used for something else
+function! JSLint()
+	let s:save_makeprg = &makeprg
+	let s:save_efm = &efm
+	set efm=Lint\ at\ line\ %l\ character\ %c:\ %m
+	set makeprg=jslint\ %
+	:make
+	let &makeprg = s:save_makeprg 
+	let &efm = s:save_efm
+endfunction
+
 let b:undo_ftplugin = "setl fo< ofu< com< cms<" 
 
 let &cpo = s:cpo_save
