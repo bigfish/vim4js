@@ -251,7 +251,7 @@ function! s:ExtProperty()
 	let s:linenum -= 1
 	"get the first name:Type occurrence -- note the type must not be separated from the
 	"name by any white space
-	let pml = matchlist(s:curline, '^\(\s*\)\([A-Za-z_$]*\):\([A-Za-z_$]*\)')
+	let pml = matchlist(s:curline, '^\(\s*\)\([A-Za-z0-9_$]*\):\([A-Za-z_$]*\)')
 
 	if len(pml) == 0
 
@@ -279,7 +279,7 @@ function! s:ExtProperty()
 
 	"remove type annotations
 	let line = getline(line("."))
-	let newline = substitute(line, '\([A-Za-z_$]\+\):[A-Za-z_$]\+', '\1','g')
+	let newline = substitute(line, '\([A-Za-z0-9_$]\+\):[A-Za-z_$]\+', '\1','g')
 	call setline(line("."),newline)
 
 endfunction
@@ -293,7 +293,7 @@ function! s:ExtVar()
 	let s:linenum -= 1
 	"get the first name:Type occurrence -- note the type must not be separated from the
 	"name by any white space
-	let pml = matchlist(s:curline, '^\(\s*\)var\s\+\([A-Za-z_$]*\):\([A-Za-z_$]*\)')
+	let pml = matchlist(s:curline, '^\(\s*\)var\s\+\([A-Za-z_0-9$]*\):\([A-Za-z_$]*\)')
 
 	if len(pml) == 0
 
@@ -321,7 +321,7 @@ function! s:ExtVar()
 
 	"remove type annotations
 	let line = getline(line("."))
-	let newline = substitute(line, '\([A-Za-z_$]\+\):[A-Za-z_$]\+', '\1','g')
+	let newline = substitute(line, '\([A-Za-z0-9_$]\+\):[A-Za-z_$]\+', '\1','g')
 	call setline(line("."),newline)
 
 endfunction
@@ -346,12 +346,12 @@ function! s:ExtMethod()
 	"now set the insert position to the line above the current one
 	let s:linenum -= 1
 	"match the method template pattern
-	let mml = matchlist(s:curline, '^\(\s*\)\([A-Za-z_$]*\)\s*[:=]\s*function\s\?(\([^)]*\)):\([A-Za-z_$]*\)')
+	let mml = matchlist(s:curline, '^\(\s*\)\([A-Za-z0-9_$]*\)\s*[:=]\s*function\s\?(\([^)]*\)):\([A-Za-z_$]*\)')
 	"check that we got a match, otherwise return
 	if len(mml) == 0
 
 		"try an old fashioned function declaration
-		let mml = matchlist(s:curline, '^\(\s*\)function\s\?\([A-Za-z_$]*\)\s\?(\([^)]*\)):\([A-Za-z_$]*\)')
+		let mml = matchlist(s:curline, '^\(\s*\)function\s\?\([A-Za-z0-9_$]*\)\s\?(\([^)]*\)):\([A-Za-z_$]*\)')
 
 		if len(mml) == 0
 			"give up
@@ -407,7 +407,7 @@ endfunction
 "remove type annotations and quantifiers (make legal JavaScript)
 function! s:CleanLine(line)
 
-	let newline = substitute(a:line, '\([A-Za-z_$]\+\)?\?\*\?:[A-Za-z_$]\+', '\1','g')
+	let newline = substitute(a:line, '\([A-Za-z0-9_$]\+\)?\?\*\?:[A-Za-z_$]\+', '\1','g')
 	let newline = substitute(newline, ')\zs:[A-Za-z_$]\+', '','g')
 	return newline
 
