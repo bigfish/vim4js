@@ -569,5 +569,14 @@ endfunction
 
 let b:undo_ftplugin = "setl fo< ofu< com< cms<" 
 
+"Search for references to current word
+"requires grep_project script
+"and that the project code is in a 'src' directory
+"and that the current directory is beneath it
+setlocal grepprg=grep_project\ $*
+"TODO: make a command to search for current word
+"this may require either a contextual lookup to infer the parent class
+"of the word, or presenting the user with a list of tags to search for
+
 let &cpo = s:cpo_save
 unlet s:cpo_save

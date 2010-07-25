@@ -6,7 +6,6 @@
 bin-debug/*
 bin-release/*
 html-template/*
-bin/*
 doc/*
 obj/*
 */.svn/*
