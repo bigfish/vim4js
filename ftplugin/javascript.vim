@@ -365,6 +365,7 @@ function! s:ExtMethod()
     let s:meth_name = mml[2]
 	let s:meth_sig = mml[3]
 	let s:return_type = mml[4]
+
     "start comment
 	call s:AppendLine("")
     call s:AppendLine(s:indent . "/**")
@@ -407,7 +408,7 @@ endfunction
 "remove type annotations and quantifiers (make legal JavaScript)
 function! s:CleanLine(line)
 
-	let newline = substitute(a:line, '\([A-Za-z0-9_$]\+\)?\?\*\?:[A-Za-z_$]\+', '\1','g')
+	let newline = substitute(a:line, '\([A-Za-z0-9_$]\+\)\?\*\?:[A-Za-z_$]\+', '\1','g')
 	let newline = substitute(newline, ')\zs:[A-Za-z_$]\+', '','g')
 	return newline
 
