@@ -597,15 +597,33 @@ if !exists(":JSUpdateDB")
 	command JSUpdateDB :call s:JSUpdateDB()
 endif
 function! s:JSUpdateDB()
-
 	call system("jscope $(get_src_dir)")
-	"add db in case it does not exist (suppressing warnings about duplicate db)
+endfunction
+
+" (a)dd db
+if !hasmapto('<Plug>JSAddDB')
+	map <Leader>a <Plug>JSAddDB
+endif
+
+noremap <script> <Plug>JSAddDB <SID>JSAddDB
+noremap <SID>JSAddDB :call <SID>JSAddDB()<CR>
+
+if !exists(":JSAddDB")
+	command JSAddDB :call s:JSAddDB()
+endif
+function! s:JSAddDB()
+
+	"add db in case it does not exist 
 	let db = system("find_cscope_db $(pwd)")
 	"strip off ^J char that seems to be appended to shell output
 	let db = strpart(db, 0, len(db) - 1)
 	exec "cs add " . db 
 
 endfunction
+
+"find (r)eferences to current symbol (calls cscope)
+"uses (t)ext search as others do not seem to work very well
+nmap <Leader>r :scs find t <C-R>=expand("<cword>")<CR><CR>	
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
