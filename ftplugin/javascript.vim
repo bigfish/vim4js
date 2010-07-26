@@ -577,5 +577,35 @@ setlocal grepprg=grep_project\ $*
 "this may require either a contextual lookup to infer the parent class
 "of the word, or presenting the user with a list of tags to search for
 
+"cscope mappings
+"needs jscope bash script
+"needs bash function in .bashrc :
+"get_src_dir()
+"{
+"local PWD=$(pwd)
+"echo "${PWD%src*}src"
+"}
+" (u)pdate db
+if !hasmapto('<Plug>JSUpdateDB')
+	map <Leader>u <Plug>JSUpdateDB
+endif
+
+noremap <script> <Plug>JSUpdateDB <SID>JSUpdateDB
+noremap <SID>JSUpdateDB :call <SID>JSUpdateDB()<CR>
+
+if !exists(":JSUpdateDB")
+	command JSUpdateDB :call s:JSUpdateDB()
+endif
+function! s:JSUpdateDB()
+
+	call system("jscope $(get_src_dir)")
+	"add db in case it does not exist (suppressing warnings about duplicate db)
+	let db = system("find_cscope_db $(pwd)")
+	"strip off ^J char that seems to be appended to shell output
+	let db = strpart(db, 0, len(db) - 1)
+	exec "cs add " . db 
+
+endfunction
+
 let &cpo = s:cpo_save
 unlet s:cpo_save

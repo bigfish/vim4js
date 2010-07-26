@@ -1,0 +1,9 @@
+#!/bin/bash
+#these functions need to be sourced 
+# eg, add them to your .bashrc
+get_src_dir()
+{
+local PWD=$(pwd)
+#get 'src' dir above current directory
+echo "${PWD%src*}src"
+}

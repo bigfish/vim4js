@@ -1,0 +1,17 @@
+#!/bin/bash
+#validate input
+if [ ! -d $1 ]; then
+	echo "jscope: no source directory specified"
+	return 1
+fi
+project_dir=$1
+#go to root to make paths absolute
+pushd / > /dev/null
+#generate list of files for cscope to analyze
+find $project_dir -name '*.js' > ${project_dir}/cscope.files
+#call cscope in same dir to generate db
+pushd $project_dir > /dev/null
+cscope -b
+popd > /dev/null
+popd > /dev/null
+echo "cscope db generated at ${project_dir}/cscope.out"

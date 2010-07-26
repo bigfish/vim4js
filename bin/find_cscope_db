@@ -1,0 +1,12 @@
+#!/bin/bash
+if [ -z $1 ];then
+	echo "no directory provided"
+	exit 1
+else
+	pattern=$1
+fi
+PWD=$(pwd)
+#get last 'src' dir above current directory
+#find cscope.out there... hopefully
+DB="${PWD%src*}src/cscope.out"
+echo $DB
