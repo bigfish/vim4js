@@ -32,6 +32,7 @@ endif
 " ******************* end copy paste from system ftplugin ******************
 
 "error format for JSLint
+"this can be overridden but will be temporarily reset if JSLint is called
 set efm=Lint\ at\ line\ %l\ character\ %c:\ %m
 set makeprg=jslint\ %
 
@@ -48,7 +49,12 @@ setlocal expandtab
 setlocal shiftwidth=4
 
 "js(b)eautify -- for some reason this opens folded comments
-nnoremap <silent> <leader>b :call JSBeautify()<cr>
+nnoremap <silent> <leader>b :call JS_Beautify()<cr>
+"wrap the JSBeautify script to fix some things
+function! JS_Beautify()
+	call JSBeautify()
+	exec '%s/\k\zs:/ :/g'
+endf
 
 "cleanAndSave
 
@@ -548,7 +554,8 @@ endfunction
 
 "when saving file, run jsbeautify and jslint
 function! JSSave()
-	call JSBeautify()
+	call JS_Beautify()
+	call s:JSFoldDocComments()
 	call JSLint()
 	"replace all hard tabs with spaces
 	retab
@@ -559,9 +566,9 @@ endfunction
 function! JSLint()
 	let s:save_makeprg = &makeprg
 	let s:save_efm = &efm
-	set efm=Lint\ at\ line\ %l\ character\ %c:\ %m
-	set makeprg=jslint\ %
-	:make
+	setlocal efm=Lint\ at\ line\ %l\ character\ %c:\ %m
+	setlocal makeprg=jslint\ % 
+	:lmake!
 	let &makeprg = s:save_makeprg 
 	let &efm = s:save_efm
 endfunction
