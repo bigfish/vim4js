@@ -55,11 +55,11 @@ function! JS_Beautify()
 endf
 
 "set tags
-set tags=tags;
-set tags+=$VIM4JS_HOME/tags/ext/tags
-set tags+=$VIM4JS_HOME/tags/jscore/tags
-set tags+=$VIM4JS_HOME/tags/html/tags
-set tags+=$VIM4JS_HOME/tags/webgl/tags
+setlocal tags=tags;
+setlocal tags+=$VIM4JS_HOME/tags/ext/tags
+setlocal tags+=$VIM4JS_HOME/tags/jscore/tags
+setlocal tags+=$VIM4JS_HOME/tags/html/tags
+setlocal tags+=$VIM4JS_HOME/tags/webgl/tags
 
 "cleanAndSave
 
