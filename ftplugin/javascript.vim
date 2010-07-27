@@ -54,6 +54,13 @@ function! JS_Beautify()
 	exec '%s/\k\zs:/ :/g'
 endf
 
+"set tags
+set tags=tags;
+set tags+=$VIM4JS_HOME/tags/ext/tags
+set tags+=$VIM4JS_HOME/tags/jscore/tags
+set tags+=$VIM4JS_HOME/tags/html/tags
+set tags+=$VIM4JS_HOME/tags/webgl/tags
+
 "cleanAndSave
 
 if !hasmapto('<Plug>JSOpenDomDoc')
@@ -132,8 +139,7 @@ function! s:ExtClass()
 	if s:class_name == "Global"
 		let s:global = 1
 		let s:singleton = 1
-		"ie: don't allow global symbols as members of other objects
-	endif
+		"ie: don't allow global symbols as members of other objects endif
     let s:class_descr = input("description: ")
 	"skip extends and singleton questions for Global vars / functions
 	if !s:global
