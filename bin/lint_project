@@ -1,3 +1,0 @@
-#!/bin/bash
-source "${VIM4JS_HOME}/bin/functions"
-lintdir `get_src_dir`

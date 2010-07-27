@@ -14,14 +14,18 @@ if !exists('g:jslintdir_cwindow')
 endif
 
 if exists(':JSLintDir') != 2
-    command JSLintDir :call JSLintDir()
+    command -nargs=1 JSLintDir :call JSLintDir(<args>)
+endif
+
+if exists(':JSLintProject') != 2
+    command JSLintProject :call JSLintProject()
 endif
 
 CompilerSet efm=%f:Lint\ at\ line\ %l\ character\ %c:\ %m
-CompilerSet makeprg=lint_project 
+CompilerSet makeprg=lintdir 
 
-function! JSLintDir()
-
+function! JSLintDir(dir)
+	echo 'linting dir: ' . a:dir
 	"shellpipe
     if has('win32') || has('win16') || has('win95') || has('win64')
         setlocal sp=>%s
@@ -29,10 +33,17 @@ function! JSLintDir()
         setlocal sp=>%s\ 2>&1
     endif
 
-    silent make!
+    exec 'silent make! ' . a:dir
 
 	if g:jslintdir_cwindow
 		cwindow
 	endif
 	
+endfunction
+
+function! JSLintProject()
+	
+	let dir = system("get_src_dir")
+	call JSLintDir(dir)
+
 endfunction
