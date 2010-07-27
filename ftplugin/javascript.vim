@@ -31,10 +31,8 @@ endif
 
 " ******************* end copy paste from system ftplugin ******************
 
-"error format for JSLint
-"this can be overridden but will be temporarily reset if JSLint is called
-set efm=Lint\ at\ line\ %l\ character\ %c:\ %m
-set makeprg=jslint\ %
+"default compiler
+:compiler jslint
 
 "DOM docs
 let g:HTMLSpecUrl = "http://html5/index.html"
@@ -556,21 +554,9 @@ endfunction
 function! JSSave()
 	call JS_Beautify()
 	call s:JSFoldDocComments()
-	call JSLint()
 	"replace all hard tabs with spaces
 	retab
 	exec 'w'
-endfunction
-"wrapper to run jslint temporarily as make program 
-"in case makeprg is being used for something else
-function! JSLint()
-	let s:save_makeprg = &makeprg
-	let s:save_efm = &efm
-	setlocal efm=Lint\ at\ line\ %l\ character\ %c:\ %m
-	setlocal makeprg=jslint\ % 
-	:lmake!
-	let &makeprg = s:save_makeprg 
-	let &efm = s:save_efm
 endfunction
 
 let b:undo_ftplugin = "setl fo< ofu< com< cms<" 
