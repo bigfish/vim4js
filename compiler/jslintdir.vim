@@ -9,8 +9,8 @@ if exists(":CompilerSet") != 2
 	command -nargs=* CompilerSet setlocal <args>
 endif
 
-if !exists('g:jslintdir_lwindow')
-    let g:jslintdir_lwindow = 1
+if !exists('g:jslintdir_cwindow')
+    let g:jslintdir_cwindow = 1
 endif
 
 if exists(':JSLintDir') != 2
@@ -29,10 +29,10 @@ function! JSLintDir()
         setlocal sp=>%s\ 2>&1
     endif
 
-    silent lmake!
+    silent make!
 
-	if g:jslintdir_lwindow
-		lwindow
+	if g:jslintdir_cwindow
+		cwindow
 	endif
 	
 endfunction
