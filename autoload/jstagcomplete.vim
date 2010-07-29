@@ -82,11 +82,13 @@ function! jstagcomplete#Complete(findstart, base)
         "if we did find the context (type) and we don't get any results,
 		"try DOM or JSCore lookup without any constraints 
 
-        if s:found_context 
-			"show no completions since we have not found any and we know the
-			"context (type) of the base object
-		else
-			if len(tags) == 0
+		if len(tags) == 0
+			if s:found_context 
+				"show no completions since we have not found any and we know the
+				"context (type) of the base object
+			else
+				"since we did not find the context,
+				"do a liberal search on the tags
 				let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
 				let constraints.name = tlib#rx#Escape(a:base)
 				let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
@@ -163,8 +165,6 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 		let baseObj = s:GetLastWord(context)
     else
         " no base: global 
-		" TODO: constrain to Global members
-		" or constructors
 		"let a:constraints.kind = 'f'
     endif
 
@@ -175,7 +175,7 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 		if match(baseObj, '^[A-Z]') > -1
 			let class_rx = tlib#rx#Escape(baseObj)
 			let cons.class = class_rx
-			let cons.isstatic = tlib#rx#Escape("yes")
+			let cons.isstatic = "yes"
 			let s:found_context = 1
 		else
 			"TODO: attempt to infer type of baseObj from context

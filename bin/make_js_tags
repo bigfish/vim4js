@@ -1,0 +1,4 @@
+#!/bin/bash
+make -B -f ${EXT_HOME}/Makefile
+make -B -f ${HTML5_HOME}/Makefile
+make -B -f ${JSCORE_HOME}/Makefile

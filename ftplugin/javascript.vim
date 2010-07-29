@@ -47,19 +47,14 @@ setlocal expandtab
 setlocal shiftwidth=4
 
 "js(b)eautify -- for some reason this opens folded comments
-nnoremap <silent> <leader>b :call JS_Beautify()<cr>
-"wrap the JSBeautify script to fix some things
-function! JS_Beautify()
-	call JSBeautify()
-	exec '%s/\k\zs:/ :/g'
-endf
+nnoremap <silent> <leader>b :call JSBeautify()<cr>
 
 "set tags
-setlocal tags=tags;
-setlocal tags+=$VIM4JS_HOME/tags/ext/tags
-setlocal tags+=$VIM4JS_HOME/tags/jscore/tags
-setlocal tags+=$VIM4JS_HOME/tags/html/tags
-setlocal tags+=$VIM4JS_HOME/tags/webgl/tags
+set tags=tags;
+set tags+=$VIM4JS_HOME/tags/extjs/tags
+set tags+=$VIM4JS_HOME/tags/jscore/tags
+set tags+=$VIM4JS_HOME/tags/html/tags
+set tags+=$VIM4JS_HOME/tags/webgl/tags
 
 "cleanAndSave
 
@@ -365,7 +360,7 @@ function! s:ExtMethod()
 
 		if len(mml) == 0
 			"give up
-			Decho("line does not match method template")
+			echo "line does not match method template"
 			return
 		endif
 
@@ -558,7 +553,7 @@ endfunction
 
 "when saving file, run jsbeautify and jslint
 function! JSSave()
-	call JS_Beautify()
+	call JSBeautify()
 	call s:JSFoldDocComments()
 	"replace all hard tabs with spaces
 	retab

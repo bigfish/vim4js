@@ -47,11 +47,11 @@ function! JSLint(saved)
     endif
 
     " If check is executed by buffer write - do not jump to first error
-    if !a:saved
-        silent lmake
-    else
-        silent lmake!
-    endif
+	if !a:saved
+      silent lmake
+	else
+      silent lmake!
+	endif
 
 	if g:jslint_lwindow
 		lwindow
