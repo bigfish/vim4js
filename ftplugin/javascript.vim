@@ -49,13 +49,6 @@ setlocal shiftwidth=4
 "js(b)eautify -- for some reason this opens folded comments
 nnoremap <silent> <leader>b :call JSBeautify()<cr>
 
-"set tags
-set tags=tags;
-set tags+=$VIM4JS_HOME/tags/extjs/tags
-set tags+=$VIM4JS_HOME/tags/jscore/tags
-set tags+=$VIM4JS_HOME/tags/html/tags
-set tags+=$VIM4JS_HOME/tags/webgl/tags
-
 "cleanAndSave
 
 if !hasmapto('<Plug>JSOpenDomDoc')
