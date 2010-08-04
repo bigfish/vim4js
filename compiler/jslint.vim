@@ -22,7 +22,7 @@ if exists(':JSLint') != 2
 endif
 
 CompilerSet efm=Lint\ at\ line\ %l\ character\ %c:\ %m
-CompilerSet makeprg=jslint\ % 
+CompilerSet makeprg=jslint\ %\ $JSLINT_HOME/ext_options.js 
 
 if g:jslint_onwrite
     augroup javascript
@@ -47,11 +47,11 @@ function! JSLint(saved)
     endif
 
     " If check is executed by buffer write - do not jump to first error
-	if !a:saved
+	"if !a:saved
       silent lmake
-	else
-      silent lmake!
-	endif
+	"else
+      "silent lmake!
+	"endif
 
 	if g:jslint_lwindow
 		lwindow

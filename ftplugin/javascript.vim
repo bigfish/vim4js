@@ -43,8 +43,10 @@ let s:class_singleton = 0
 let s:global = 0
 
 "expand tabs to 4 spaces
+"setting global since HTML is setting global and we would be overriden
+set shiftwidth=4
+
 setlocal expandtab
-setlocal shiftwidth=4
 
 "js(b)eautify -- for some reason this opens folded comments
 nnoremap <silent> <leader>b :call JSBeautify()<cr>
@@ -127,7 +129,8 @@ function! s:ExtClass()
 	if s:class_name == "Global"
 		let s:global = 1
 		let s:singleton = 1
-		"ie: don't allow global symbols as members of other objects endif
+		"ie: don't allow global symbols as members of other objects 
+	endif
     let s:class_descr = input("description: ")
 	"skip extends and singleton questions for Global vars / functions
 	if !s:global
@@ -253,7 +256,7 @@ function! s:ExtProperty()
 
 	if len(pml) == 0
 
-		Decho("line does not match property template")
+		echo "line does not match property template"
 		return
 	endif
 
@@ -547,6 +550,8 @@ endfunction
 "when saving file, run jsbeautify and jslint
 function! JSSave()
 	call JSBeautify()
+	"make sure there's a space after catch
+	exec '%s/catch(/catch (/g'
 	call s:JSFoldDocComments()
 	"replace all hard tabs with spaces
 	retab
