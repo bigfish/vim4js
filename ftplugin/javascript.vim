@@ -45,6 +45,8 @@ let s:global = 0
 "expand tabs to 4 spaces
 setlocal expandtab
 setlocal shiftwidth=4
+setlocal shiftround
+setlocal tabstop=4
 
 "js(b)eautify -- for some reason this opens folded comments
 nnoremap <silent> <leader>b :call JSBeautify()<cr>
@@ -127,7 +129,8 @@ function! s:ExtClass()
 	if s:class_name == "Global"
 		let s:global = 1
 		let s:singleton = 1
-		"ie: don't allow global symbols as members of other objects endif
+		"ie: don't allow global symbols as members of other objects 
+	endif
     let s:class_descr = input("description: ")
 	"skip extends and singleton questions for Global vars / functions
 	if !s:global
@@ -253,7 +256,7 @@ function! s:ExtProperty()
 
 	if len(pml) == 0
 
-		Decho("line does not match property template")
+		echo "line does not match property template"
 		return
 	endif
 
@@ -295,7 +298,7 @@ function! s:ExtVar()
 
 	if len(pml) == 0
 
-		Decho("line does not match var template")
+		echo "line does not match var template"
 		return
 	endif
 
@@ -435,7 +438,7 @@ function! s:ProcessParam(param)
 		"get type
 		let s:param_type = pl[1]
 	else
-		Decho("parameter does not have type annotation")
+		echo "parameter does not have type annotation"
 		return
 	endif
 	"expand type shortcuts
