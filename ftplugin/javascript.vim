@@ -550,6 +550,8 @@ endfunction
 "when saving file, run jsbeautify and jslint
 function! JSSave()
 	call JSBeautify()
+	"make sure there's a space after catch
+	"exec '%s/catch(/catch (/g'
 	call s:JSFoldDocComments()
 	"replace all hard tabs with spaces
 	retab
