@@ -496,7 +496,7 @@ endfunction
 setlocal fillchars="vert:,fold:"
 
 "customize folds
-function! JSFoldText()
+function! JSFoldComment()
 	"return getline(v:foldstart + 1);
     let line = getline(v:foldstart + 1)
     "let sub = substitute(line, '@', '', 'g')
@@ -504,7 +504,15 @@ function! JSFoldText()
     return line
 endfunction
 
-setl foldtext=JSFoldText()
+function! JSFoldBlock()
+	"return getline(v:foldstart + 1);
+    let line = getline(v:foldstart + 0)
+    "let sub = substitute(line, '@', '', 'g')
+    "return v:folddashes . sub
+    return line
+endfunction
+
+setl foldtext=JSFoldBlock()
 
 if !hasmapto('<Plug>JSFoldDocComments')
 	map <Leader>cc <Plug>JSFoldDocComments
@@ -518,7 +526,9 @@ if !exists(":JSFoldDocComments")
 endif
 
 function! s:JSFoldDocComments() 
-	
+
+	setl foldtext=JSFoldComment()
+
 	"remember position
 	normal mp
 	normal gg
@@ -544,6 +554,9 @@ function! s:JSFoldDocComments()
 
 	"restore pos
 	normal 'p
+
+	"unset fold func
+	setl foldtext=JSFoldBlock()
 
 endfunction
 
