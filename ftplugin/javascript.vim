@@ -563,13 +563,20 @@ endfunction
 "when saving file, run jsbeautify and jslint
 function! JSSave()
 	"JSBeautify loses position in file, removes markers :(
+	"have to do some Vim gymnastics to save and restore position
+	"using linenumbers only
 	let curlinenum = line('.')
+	normal H
+	let toplinenum = line('.')
+
 	call JSBeautify()
 	"make sure there's a space after catch
 	"exec '%s/catch(/catch (/g'
 	call s:JSFoldDocComments()
 	"replace all hard tabs with spaces
 	retab
+	exec "normal ".toplinenum.'G'
+	normal zt
 	exec "normal ".curlinenum.'G'
 endfunction
 
