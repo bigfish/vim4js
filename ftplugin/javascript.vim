@@ -562,13 +562,15 @@ endfunction
 
 "when saving file, run jsbeautify and jslint
 function! JSSave()
+	"JSBeautify loses position in file, removes markers :(
+	let curlinenum = line('.')
 	call JSBeautify()
 	"make sure there's a space after catch
 	"exec '%s/catch(/catch (/g'
 	call s:JSFoldDocComments()
 	"replace all hard tabs with spaces
 	retab
-	exec 'w'
+	exec "normal ".curlinenum.'G'
 endfunction
 
 let b:undo_ftplugin = "setl fo< ofu< com< cms<" 
