@@ -578,6 +578,7 @@ function! JSSave()
 	exec "normal ".toplinenum.'G'
 	normal zt
 	exec "normal ".curlinenum.'G'
+	exec 'w'
 endfunction
 
 let b:undo_ftplugin = "setl fo< ofu< com< cms<" 
