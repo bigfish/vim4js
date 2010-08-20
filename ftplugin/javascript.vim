@@ -560,6 +560,27 @@ function! s:JSFoldDocComments()
 
 endfunction
 
+if !hasmapto('<Plug>JSFoldFunctions')
+	map <Leader>ff <Plug>JSFoldFunctions
+endif
+
+noremap <script> <Plug>JSFoldFunctions <SID>JSFoldFunctions
+noremap <SID>JSFoldFunctions :call <SID>JSFoldFunctions()<CR>
+
+if !exists(":JSFoldFunctions")
+	command JSFoldFunctions :call s:JSFoldFunctions()
+endif
+
+function! s:JSFoldFunctions()
+	normal mp
+	normal gg
+	while search('function', 'W')
+		normal zc
+	endwhile
+	"restore pos
+	normal 'p
+endfunction
+
 "when saving file, run jsbeautify and jslint
 function! JSSave()
 	call JSBeautify()
