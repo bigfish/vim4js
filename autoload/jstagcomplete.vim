@@ -63,6 +63,7 @@ endf
 function! jstagcomplete#Complete(findstart, base) 
     let line = getline('.')
     let start = col('.')
+
     if a:findstart
         let start -= 1
         while start > 0 && line[start - 1] =~ '\a'
@@ -72,10 +73,16 @@ function! jstagcomplete#Complete(findstart, base)
     else
         let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
         let constraints.name = tlib#rx#Escape(a:base)
-        let context = strpart(line, 0, start)
+        let context = strpart(line, 0, start-1)
+		let cstart = start-1
+		while cstart > 0 && line[cstart-1] =~ '[A-Za-z\.]'
+			let cstart -= 1
+		endwhile
+		let context = strpart(context, cstart, len(context) - cstart )
+
 		let s:found_context = 0
         "1. attempt to do a contextual tag search by getting constraints
-        let constraints = jstagcomplete#JavaScript(constraints, a:base, context)
+		let constraints = jstagcomplete#JavaScript(constraints, a:base, context)
         "get matching tags using constraints
 		let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
 		"fallback
