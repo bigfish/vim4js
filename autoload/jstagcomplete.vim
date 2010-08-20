@@ -145,8 +145,12 @@ endf
 
 "Javascript Complete
 function! jstagcomplete#JavaScript(constraints, base, context) 
+
 	let cons = a:constraints
-    "Decho("jstagcomplete#JavaScript")
+	"default kinds to search for m = method, f = (constructor) function, v =
+	"variable
+    let cons.kind = 'mfv'
+
     "base is everything after last .
     "context is everything up to and including last dot
 	"Decho("base: " . a:base)
@@ -167,7 +171,6 @@ function! jstagcomplete#JavaScript(constraints, base, context)
         " no base: global 
 		"let a:constraints.kind = 'f'
     endif
-
     if len(baseObj) 
 		"if it starts with a capital letter
 		"it is probably a singleton (aka global) 
@@ -175,7 +178,8 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 		if match(baseObj, '^[A-Z]') > -1
 			let class_rx = tlib#rx#Escape(baseObj)
 			let cons.class = class_rx
-			let cons.isstatic = "yes"
+			"it is possible to nest singleton 'classes'
+			let cons.kind = cons.kind . 'c'
 			let s:found_context = 1
 		else
 			"TODO: attempt to infer type of baseObj from context
@@ -213,7 +217,6 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 		"we will do another search on all tags
     endif
 
-    let cons.kind = 'mfv'
     return cons
 
 endfunction
