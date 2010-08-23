@@ -75,7 +75,7 @@ function! jstagcomplete#Complete(findstart, base)
         let constraints.name = tlib#rx#Escape(a:base)
         let context = strpart(line, 0, start-1)
 		let cstart = start-1
-		while cstart > 0 && line[cstart-1] =~ '[A-Za-z\.]'
+		while cstart > 0 && line[cstart-1] =~ '[A-Za-z0-9_\$\.]'
 			let cstart -= 1
 		endwhile
 		let context = strpart(context, cstart, len(context) - cstart )
@@ -173,7 +173,7 @@ function! jstagcomplete#JavaScript(constraints, base, context)
     let baseObj = ""
     "get the last portion of a dotted word
     if stridx(context, '.') > 0
-		let baseObj = s:GetLastWord(context)
+		let baseObj = s:GetBase(context)
     else
         " no base: global 
 		"let a:constraints.kind = 'f'
@@ -195,10 +195,12 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 			"bn : search backwards and do not move cursor
 			let alnum = search(assignRE, 'bn')
 			"debug shortcut
-			if alnum
+			if alnum > 0
 				let aline = getline(alnum)
 				let assign = matchlist(aline, assignRE) 
-				if len(assign)
+				
+				if len(assign) > 0
+
 					"figure out the type which was assigned to the variable 
 					let val = assign[1]
 					"if the assingment value is an instantiation
@@ -227,14 +229,26 @@ function! jstagcomplete#JavaScript(constraints, base, context)
     return cons
 
 endfunction
-
-function! s:GetLastWord(dottedword)
+" given Foo.bar , return Foo
+function! s:GetBase(dottedword)
 	let dotword = a:dottedword
     if stridx(dotword, '.') > 0
         "remove everything after the last dot (including dot)
         let base = strpart(dotword, 0, strridx(dotword, '.'))
         "now the last portion is the base object 
         let lastword = strpart(base, strridx(base, '.') + 1)
+	else
+		let lastword = dotword
+	endif
+	return lastword
+endfunction
+
+" given Foo.bar, return bar
+function! s:GetLastWord(dottedword)
+	let dotword = a:dottedword
+    if stridx(dotword, '.') > 0
+        "now the last portion is the base object 
+        let lastword = strpart(dotword, strridx(dotword, '.') + 1)
 	else
 		let lastword = dotword
 	endif
