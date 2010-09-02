@@ -664,5 +664,84 @@ endfunction
 "uses (t)ext search as others do not seem to work very well
 nmap <Leader>r :scs find t <C-R>=expand("<cword>")<CR><CR>	
 
+"****************** InstrumentClass (d = debug) ***********
+if !hasmapto('<Plug>AS3InstrumentClass')
+	map <Leader>d <Plug>AS3InstrumentClass
+endif
+noremap <script> <Plug>AS3InstrumentClass <SID>InstrumentClass
+noremap <SID>InstrumentClass :call <SID>InstrumentClass()<CR>
+
+"add trace statements after each function signature to trace the function
+"calls and argument values
+function! s:InstrumentClass()
+	"get Class name to prepend 
+	let cls = expand("%:t:r")
+	"remember position 
+	normal mp
+	"goto start
+	normal gg
+
+	while search('function','W') > 0
+		"1 copy function signature into variable"
+		let sig = getline(".")
+		"2 construct trace statement"
+		let sig = matchstr(sig, '\w\+([^)]*)')
+		let fn = matchstr(sig, '\w\+')
+		let st = stridx(sig, "(") + 1
+		let en = stridx(sig, ")")
+		"args is everything in brackets"
+		let args = strpart(sig, st, en-st)
+		"niceargs is formatted for tracing"
+		let niceargs = ""
+		let argslist = matchlist(args, '\(\w\+\)')
+		if len(argslist) > 0
+			if stridx(args, ",") > 0 
+				let commapos = 0
+				let niceargs = niceargs . "(\" + "
+				while match(args, ',', commapos + 1) != -1
+					let oldcommapos = commapos
+					let commapos = match(args, ',', oldcommapos + 1) 
+					let myarg = strpart(args, oldcommapos, commapos - oldcommapos)
+					let argname = matchlist(myarg, '\(\w\+\)')[1]
+					let niceargs = niceargs . argname . " + \", \" + "
+					"let niceargs = niceargs . argname
+				endwhile
+				"get the last one
+				let lastarg = strpart(args, commapos, len(args)-commapos)
+				let lastargname = matchlist(lastarg, '\(\w\+\)')[1]
+				let niceargs = niceargs . lastargname . " + \")"
+
+			else
+				"only one argument
+				let niceargs = "(\" + " . argslist[1] . " + \")"
+			endif
+		else
+			let niceargs = "()"
+		endif
+
+		let trace = "console.log(\"" . cls .":" . fn . niceargs ."\" );"
+		"find start brace -- will be on same or next line
+		if match(getline("."),"{") !~ -1 
+			"opening brace is on same line..."
+			"open new line"
+			normal o
+			"add previously constructed trace statement
+			call setline(".", trace)
+		endif
+	endwhile
+endfunction
+
+if !hasmapto('<Plug>JSNoLog')
+	map <Leader>n <Plug>JSNoLog
+endif
+noremap <script> <Plug>JSNoLog <SID>NoLog
+noremap <SID>NoLog :call <SID>NoLog()<CR>
+
+function! s:NoLog()
+	"to confirm
+	":%s/^.*console\.log(.*).*$\n//gc
+	:%s/^\s*console\.log(.*);\s*$\n//g
+endfunction
+
 let &cpo = s:cpo_save
 unlet s:cpo_save
