@@ -575,7 +575,14 @@ function! s:JSFoldFunctions()
 	normal mp
 	normal gg
 	while search('function', 'W')
-		normal zc
+		"don't fold constructors
+		let lineStr = getline('.')
+		"this will work for function Xxx () {} constructors
+		if match(lineStr, 'function [A-Z]\w\+([^)]*)') >= 0
+			"do not fold
+		else
+			normal zc
+		endif
 	endwhile
 	"restore pos
 	normal 'p
@@ -592,7 +599,8 @@ function! JSSave()
 
 	call JSBeautify()
 	"make sure there's a space after catch
-	"exec '%s/catch(/catch (/g'
+	exec '%s/catch(/catch (/ge'
+
 	call s:JSFoldDocComments()
 	"replace all hard tabs with spaces
 	retab
