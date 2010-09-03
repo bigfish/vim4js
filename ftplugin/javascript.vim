@@ -42,11 +42,12 @@ let g:ExtDocUrl = "http://extdocs/docs/?class="
 let s:class_singleton = 0
 let s:global = 0
 
+"tab stuff should be in .vimrc
 "expand tabs to 4 spaces
-setlocal expandtab
-setlocal shiftwidth=4
-setlocal shiftround
-setlocal tabstop=4
+"setlocal noexpandtab
+"setlocal shiftwidth=4
+"setlocal shiftround
+"setlocal tabstop=4
 
 "js(b)eautify -- for some reason this opens folded comments
 nnoremap <silent> <leader>b :call JSBeautify()<cr>
@@ -602,7 +603,8 @@ function! JSSave()
 	exec '%s/catch(/catch (/ge'
 
 	call s:JSFoldDocComments()
-	"replace all hard tabs with spaces
+
+	"apply current tab settings
 	retab
 	exec "normal ".toplinenum.'G'
 	normal zt

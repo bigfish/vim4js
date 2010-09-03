@@ -22,7 +22,7 @@ if exists(':JSLint') != 2
 endif
 
 CompilerSet efm=Lint\ at\ line\ %l\ character\ %c:\ %m
-CompilerSet makeprg=jslint\ %\ $JSLINT_HOME/my_options.js 
+CompilerSet makeprg=jslint\ %\ $JSLINT_HOME/options/my_options.js 
 
 if g:jslint_onwrite
     augroup javascript
