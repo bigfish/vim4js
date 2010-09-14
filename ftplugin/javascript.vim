@@ -409,8 +409,7 @@ endfunction
 
 "remove type annotations and quantifiers (make legal JavaScript)
 function! s:CleanLine(line)
-
-	let newline = substitute(a:line, '\([A-Za-z0-9_$]\+\)\?\*\?:[A-Za-z_$]\+', '\1','g')
+	let newline = substitute(a:line, '\([A-Za-z0-9_$]\+\)\?[?*]\?:[A-Za-z_$]\+', '\1','g')
 	let newline = substitute(newline, ')\zs:[A-Za-z_$]\+', '','g')
 	return newline
 
@@ -595,7 +594,7 @@ function! JSSave()
 	"make sure there's a space after catch
 	exec '%s/catch(/catch (/ge'
 
-	call s:JSFoldDocComments()
+	"call s:JSFoldDocComments()
 
 	"apply current tab settings
 	retab
