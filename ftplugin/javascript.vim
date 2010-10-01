@@ -479,12 +479,12 @@ function! s:ExpandTypeName(type_name)
 endfunction
 
 function! s:JSSelectBlockComment()
-	let s:startComment = search('^\s*/\*','bcW')
-	if s:startComment
+	let startComment = search('/\*','bcW')
+	if startComment
 		"start linewise visual mode
-		normal V
+		normal v
 		"if we found a start of a multiline comment, find the end
-		call search('\*/','cW')
+		call search('\*/','cWe')
 	endif
 
 endfunction
@@ -493,13 +493,12 @@ if !exists(":JSSelectBlockComment")
 	command JSSelectBlockComment :call s:JSSelectBlockComment()
 endif
 
-if !hasmapto('<Plug>JSSelectBlockComment')
-	map <Leader>cs <Plug>JSSelectBlockComment
-endif
-
 noremap <script> <Plug>JSSelectBlockComment <SID>JSSelectBlockComment
 noremap <SID>JSSelectBlockComment :call <SID>JSSelectBlockComment()<CR>
 
+if !hasmapto('<Plug>JSSelectBlockComment')
+	map <Leader>cs <Plug>JSSelectBlockComment
+endif
 
 function! s:JSDeleteBlockComment()
 	call s:JSSelectBlockComment()
