@@ -478,7 +478,7 @@ function! s:ExpandTypeName(type_name)
         return t
 endfunction
 
-function! JSSelectBlockComment()
+function! s:JSSelectBlockComment()
 	let s:startComment = search('^\s*/\*','bcW')
 	if s:startComment
 		"start linewise visual mode
@@ -489,10 +489,33 @@ function! JSSelectBlockComment()
 
 endfunction
 
-function! JSDeleteBlockComment()
-	call JSSelectBlockComment()
+if !exists(":JSSelectBlockComment")
+	command JSSelectBlockComment :call s:JSSelectBlockComment()
+endif
+
+if !hasmapto('<Plug>JSSelectBlockComment')
+	map <Leader>cs <Plug>JSSelectBlockComment
+endif
+
+noremap <script> <Plug>JSSelectBlockComment <SID>JSSelectBlockComment
+noremap <SID>JSSelectBlockComment :call <SID>JSSelectBlockComment()<CR>
+
+
+function! s:JSDeleteBlockComment()
+	call s:JSSelectBlockComment()
 	normal d
 endfunction
+
+if !exists(":JSDeleteBlockComment")
+	command JSDeleteBlockComment :call s:JSDeleteBlockComment()
+endif
+
+if !hasmapto('<Plug>JSDeleteBlockComment')
+	map <Leader>cd <Plug>JSDeleteBlockComment
+endif
+
+noremap <script> <Plug>JSDeleteBlockComment <SID>JSDeleteBlockComment
+noremap <SID>JSDeleteBlockComment :call <SID>JSDeleteBlockComment()<CR>
 
 setlocal fillchars="vert:,fold:"
 
