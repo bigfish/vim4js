@@ -477,21 +477,43 @@ function! s:ExpandTypeName(type_name)
         return t
 endfunction
 
-function! JSSelectBlockComment()
-	let s:startComment = search('^\s*/\*','bcW')
-	if s:startComment
+function! s:JSSelectBlockComment()
+	let startComment = search('/\*','bcW')
+	if startComment
 		"start linewise visual mode
-		normal V
+		normal v
 		"if we found a start of a multiline comment, find the end
-		call search('\*/','cW')
+		call search('\*/','cWe')
 	endif
 
 endfunction
 
-function! JSDeleteBlockComment()
-	call JSSelectBlockComment()
+if !exists(":JSSelectBlockComment")
+	command JSSelectBlockComment :call s:JSSelectBlockComment()
+endif
+
+noremap <script> <Plug>JSSelectBlockComment <SID>JSSelectBlockComment
+noremap <SID>JSSelectBlockComment :call <SID>JSSelectBlockComment()<CR>
+
+if !hasmapto('<Plug>JSSelectBlockComment')
+	map <Leader>cs <Plug>JSSelectBlockComment
+endif
+
+function! s:JSDeleteBlockComment()
+	call s:JSSelectBlockComment()
 	normal d
 endfunction
+
+if !exists(":JSDeleteBlockComment")
+	command JSDeleteBlockComment :call s:JSDeleteBlockComment()
+endif
+
+if !hasmapto('<Plug>JSDeleteBlockComment')
+	map <Leader>cd <Plug>JSDeleteBlockComment
+endif
+
+noremap <script> <Plug>JSDeleteBlockComment <SID>JSDeleteBlockComment
+noremap <SID>JSDeleteBlockComment :call <SID>JSDeleteBlockComment()<CR>
 
 setlocal fillchars="vert:,fold:"
 
@@ -575,7 +597,14 @@ function! s:JSFoldFunctions()
 	normal mp
 	normal gg
 	while search('function', 'W')
-		normal zc
+		"don't fold constructors
+		let lineStr = getline('.')
+		"this will work for function Xxx () {} constructors
+		if match(lineStr, 'function [A-Z]\w\+([^)]*)') >= 0
+			"do not fold
+		else
+			normal zc
+		endif
 	endwhile
 	"restore pos
 	normal 'p
