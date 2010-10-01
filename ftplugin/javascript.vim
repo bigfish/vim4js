@@ -581,6 +581,26 @@ function! s:JSFoldFunctions()
 	normal 'p
 endfunction
 
+if !exists(":JSBeautify")
+	command! -range=% -nargs=0 JSBeautify <line1>,<line2>!$JSBEAUTIFY/bin/beautify_js
+endif
+
+function! s:JSBeautify()
+	:JSBeautify
+endfunction
+
+noremap <script> <Plug>JSBeautify <SID>JSBeautify
+noremap <SID>JSBeautify :call <SID>JSBeautify()<CR>
+
+if !hasmapto('<Plug>JSBeautify')
+	map <Leader>b <Plug>JSBeautify
+endif
+
+
+"no longer used since the jslint compiler does all I need
+"JSBeautify was a bit slow, and sometimes causes unwanted line-wrapping
+"so it is only available as the command JSBeautify or its mapping <leader>b
+"
 "when saving file, run jsbeautify and jslint
 function! JSSave()
 	"JSBeautify loses position in file, removes markers :(
@@ -590,11 +610,11 @@ function! JSSave()
 	normal H
 	let toplinenum = line('.')
 
-	call JSBeautify()
+	"call JSBeautify()
 	"make sure there's a space after catch
-	exec '%s/catch(/catch (/ge'
+	"exec '%s/catch(/catch (/ge'
 
-	"call s:JSFoldDocComments()
+	"call :JSFoldDocComments()
 
 	"apply current tab settings
 	retab

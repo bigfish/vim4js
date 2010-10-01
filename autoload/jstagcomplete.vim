@@ -63,7 +63,7 @@ endf
 function! jstagcomplete#Complete(findstart, base) 
     let line = getline('.')
     let start = col('.')
-
+"Decho("Complete")
     if a:findstart
         let start -= 1
         while start > 0 && line[start - 1] =~ '\a'
