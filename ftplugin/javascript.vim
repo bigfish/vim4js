@@ -639,18 +639,17 @@ function! JSSave()
 	normal H
 	let toplinenum = line('.')
 
-	"call JSBeautify()
-	"make sure there's a space after catch
-	"exec '%s/catch(/catch (/ge'
+	exec ':JSBeautify'
 
 	"call :JSFoldDocComments()
 
 	"apply current tab settings
-	retab
+	exec ':retab'
 	exec "normal ".toplinenum.'G'
 	normal zt
 	exec "normal ".curlinenum.'G'
-	exec 'w'
+	silent write
+	
 endfunction
 
 let b:undo_ftplugin = "setl fo< ofu< com< cms<" 
