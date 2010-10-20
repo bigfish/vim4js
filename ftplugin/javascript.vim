@@ -614,12 +614,8 @@ if !exists(":JSBeautify")
 	command! -range=% -nargs=0 JSBeautify <line1>,<line2>!$JSBEAUTIFY/bin/beautify_js
 endif
 
-function! s:JSBeautify()
-	:JSBeautify
-endfunction
-
 noremap <script> <Plug>JSBeautify <SID>JSBeautify
-noremap <SID>JSBeautify :call <SID>JSBeautify()<CR>
+noremap <SID>JSBeautify :JSBeautify<CR>
 
 if !hasmapto('<Plug>JSBeautify')
 	map <Leader>b <Plug>JSBeautify
