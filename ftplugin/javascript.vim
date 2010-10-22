@@ -622,11 +622,7 @@ if !hasmapto('<Plug>JSBeautify')
 endif
 
 
-"no longer used since the jslint compiler does all I need
-"JSBeautify was a bit slow, and sometimes causes unwanted line-wrapping
-"so it is only available as the command JSBeautify or its mapping <leader>b
-"
-"when saving file, run jsbeautify and jslint
+"when saving file, run jsbeautify 
 function! JSSave()
 	"JSBeautify loses position in file, removes markers :(
 	"have to do some Vim gymnastics to save and restore position
@@ -636,8 +632,6 @@ function! JSSave()
 	let toplinenum = line('.')
 
 	exec ':JSBeautify'
-
-	"call :JSFoldDocComments()
 
 	"apply current tab settings
 	exec ':retab'
