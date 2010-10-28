@@ -49,7 +49,6 @@ let s:global = 0
 "setlocal shiftround
 "setlocal tabstop=4
 
-"js(b)eautify -- for some reason this opens folded comments
 nnoremap <silent> <leader>b :call JSBeautify()<cr>
 
 "cleanAndSave
@@ -515,11 +514,12 @@ endif
 noremap <script> <Plug>JSDeleteBlockComment <SID>JSDeleteBlockComment
 noremap <SID>JSDeleteBlockComment :call <SID>JSDeleteBlockComment()<CR>
 
+setlocal foldmethod syntax
 setlocal fillchars="vert:,fold:"
 
 "customize folds
 function! JSFoldComment()
-	"return getline(v:foldstart + 1);
+    "return getline(v:foldstart + 1);
     let line = getline(v:foldstart + 1)
     "let sub = substitute(line, '@', '', 'g')
     "return v:folddashes . sub
@@ -527,7 +527,7 @@ function! JSFoldComment()
 endfunction
 
 function! JSFoldBlock()
-	"return getline(v:foldstart + 1);
+    "return getline(v:foldstart + 1);
     let line = getline(v:foldstart + 0)
     "let sub = substitute(line, '@', '', 'g')
     "return v:folddashes . sub
@@ -537,77 +537,77 @@ endfunction
 setl foldtext=JSFoldBlock()
 
 if !hasmapto('<Plug>JSFoldDocComments')
-	map <Leader>cc <Plug>JSFoldDocComments
+    map <Leader>cc <Plug>JSFoldDocComments
 endif
 
 noremap <script> <Plug>JSFoldDocComments <SID>JSFoldDocComments
 noremap <SID>JSFoldDocComments :call <SID>JSFoldDocComments()<CR>
 
 if !exists(":JSFoldDocComments")
-	command JSFoldDocComments :call s:JSFoldDocComments()
+    command JSFoldDocComments :call s:JSFoldDocComments()
 endif
 
 function! s:JSFoldDocComments() 
 
-	setl foldtext=JSFoldComment()
+    setl foldtext=JSFoldComment()
 
-	"remember position
-	normal mp
-	normal gg
-	"cannot create or erase folds with syntax folding
-	normal zR
+    "remember position
+    normal mp
+    normal gg
+    "cannot create or erase folds with syntax folding
+    normal zR
 
-	"search forwards
-	let s:startComment =  search('^\s*\/\*\*','cW')
-	while  s:startComment
-		"NB must be at end of line
-		"this is to avoid matching this pattern in regexp
-		let s:endComment = search('^\s*\*\/\s*$','W')
-		"dont fold single lines
-		if s:endComment && s:endComment > s:startComment 
-			"with syntax folding (in syntax/javascript.vim)
-			"all we have to do is close the fold
-			normal zc
-			"exec s:startComment . ',' . s:endComment . 'fold'
-		endif
-		"look for next one
-		let s:startComment = search('^\s*\/\*\*\s*$','W')
-	endwhile
+    "search forwards
+    let s:startComment =  search('^\s*\/\*\*','cW')
+    while  s:startComment
+        "NB must be at end of line
+        "this is to avoid matching this pattern in regexp
+        let s:endComment = search('^\s*\*\/\s*$','W')
+        "dont fold single lines
+        if s:endComment && s:endComment > s:startComment 
+            "with syntax folding (in syntax/javascript.vim)
+            "all we have to do is close the fold
+            normal zc
+            "exec s:startComment . ',' . s:endComment . 'fold'
+        endif
+        "look for next one
+        let s:startComment = search('^\s*\/\*\*\s*$','W')
+    endwhile
 
-	"restore pos
-	normal 'p
+    "restore pos
+    normal 'p
 
-	"unset fold func
-	setl foldtext=JSFoldBlock()
+    "unset fold func
+    setl foldtext=JSFoldBlock()
 
 endfunction
 
 if !hasmapto('<Plug>JSFoldFunctions')
-	map <Leader>ff <Plug>JSFoldFunctions
+    map <Leader>ff <Plug>JSFoldFunctions
 endif
 
 noremap <script> <Plug>JSFoldFunctions <SID>JSFoldFunctions
 noremap <SID>JSFoldFunctions :call <SID>JSFoldFunctions()<CR>
 
 if !exists(":JSFoldFunctions")
-	command JSFoldFunctions :call s:JSFoldFunctions()
+    command JSFoldFunctions :call s:JSFoldFunctions()
 endif
 
 function! s:JSFoldFunctions()
-	normal mp
-	normal gg
-	while search('function', 'W')
-		"don't fold constructors
-		let lineStr = getline('.')
-		"this will work for function Xxx () {} constructors
-		if match(lineStr, 'function [A-Z]\w\+([^)]*)') >= 0
-			"do not fold
-		else
-			normal zc
-		endif
-	endwhile
-	"restore pos
-	normal 'p
+    normal mp
+    normal gg
+    while search('function', 'W')
+        "don't fold constructors
+        let lineStr = getline('.')
+        "this will work for function Xxx () {} constructors
+        if match(lineStr, 'function [A-Z]\w\+([^)]*)') >= 0
+            "do not fold
+        else
+            normal zc
+        endif
+    endwhile
+    "restore pos
+    normal 'p
 endfunction
 
 if !exists(":JSBeautify")
@@ -779,6 +779,83 @@ function! s:NoLog()
 	":%s/^.*console\.log(.*).*$\n//gc
 	:%s/^\s*console\.log(.*);\s*$\n//g
 endfunction
+ 
+function! s:ExtText()
+	"query user for name of locale bundle
+	let s:bundle = input("Locale Bundle name:")
+
+	if len(s:bundle) == 0
+		print "no bundle name, stopping"
+		return
+	endif
+
+	"try to find locale file using LOCALE_DIR location
+	"TODO: this should be option
+	let LOCALE_HOME = $ALLOY_UI ."/webapp/src/com/bluecoat/locale/"
+	let resource_file = LOCALE_HOME . s:bundle . ".js"
+
+	if filewritable(resource_file)
+		"process the file, adding new resource strings
+		let lines = readfile(resource_file)
+		"we assume a standard format where the first line of the resource file
+		"is the 'addBundle statement, and the last line is the closing of the
+		"function call. Thus we add the lines before the last line
+		"we must also add a comma to the end of the current last line
+		"and NOT add a comma to the last resource string 
+		" GET NEW RESOURCE STRINGS
+		let newlines = []
+		"search the current buffer for strings containing the pipe character
+		"remember position
+		normal mp
+		normal gg
+		while search('"\([A-Z_]\+|[^"]\+\)"', 'W')
+			let lineStr = getline(line('.'))
+			let matches = matchlist(lineStr, '"\([A-Z_]\+|[^"]\+\)"')
+			let matchStr = matches[1]
+			let matchArr = split(matchStr, '|')
+			let key = matchArr[0]
+			let val = matchArr[1]
+			call add(newlines, '    '.key.': "'.val.'"')
+			"replace string with call to x() function
+			let subline = substitute(lineStr, '"[A-Z_]\+|[^"]\+"', 'x("'.key.'")','')
+			call setline(line('.'), subline)
+		endwhile
+		"restore pos
+		normal 'p
+
+		" ADD RESOURCE STRINGS TO BUNDLE
+		if len(newlines) > 0
+			"add comma last line
+			if len(lines) > 2
+				let lines[len(lines) - 2] = lines[len(lines) - 2] . ','
+				"Decho(lastline)
+			endif
+			""add comma to all but last line
+			for n in range(len(newlines) - 1)
+				""add newline to lines if not in list already
+                if index(lines, newlines[n]) == -1 && index(lines, newlines[n] . ',') == -1
+                    if n < len(newlines) - 2
+                        let newlines[n] = newlines[n] . ','
+                    endif
+                    call insert(lines, newlines[n], -1)
+                endif
+			endfor
+		endif
+
+		"write new file
+		call writefile(lines,resource_file)
+		print "resource file " .resource_file." was updated"
+	else
+		Decho( "file: ".resource_file." is not writable")
+	endif
+
+endfunction
+
+if !hasmapto('<Plug>JSExtText')
+	map <Leader>x <Plug>JSExtText
+endif
+noremap <script> <Plug>JSExtText <SID>ExtText
+noremap <SID>ExtText :call <SID>ExtText()<CR>
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
