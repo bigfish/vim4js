@@ -830,11 +830,11 @@ function! s:ExtText()
 				let lines[len(lines) - 2] = lines[len(lines) - 2] . ','
 				"Decho(lastline)
 			endif
-			""add comma to all but last line
 			for n in range(len(newlines) - 1)
 				""add newline to lines if not in list already
                 if index(lines, newlines[n]) == -1 && index(lines, newlines[n] . ',') == -1
-                    if n < len(newlines) - 2
+                    ""add comma to all but last line
+                    if n < len(newlines) - 1
                         let newlines[n] = newlines[n] . ','
                     endif
                     call insert(lines, newlines[n], -1)
@@ -852,10 +852,25 @@ function! s:ExtText()
 endfunction
 
 if !hasmapto('<Plug>JSExtText')
-	map <Leader>x <Plug>JSExtText
+	map <Leader>s <Plug>JSExtText
 endif
 noremap <script> <Plug>JSExtText <SID>ExtText
 noremap <SID>ExtText :call <SID>ExtText()<CR>
 
+"add test suite 
+"must be executed from within the file which you wish to
+
+function! MakeTest()
+    
+    "get the full path of the current file
+    let class_file = expand('%:p')
+    "get the name of the test suite
+    "call the addExtTestSuite script
+    exec ":!addExtTestSuite.pl ".class_file
+    "TODO: open the newly created test file
+
+endfunction
+
 let &cpo = s:cpo_save
+
 unlet s:cpo_save
