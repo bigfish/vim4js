@@ -859,17 +859,20 @@ noremap <SID>ExtText :call <SID>ExtText()<CR>
 
 "add test suite 
 "must be executed from within the file which you wish to
-
-function! MakeTest()
-    
+if !exists("*s:MakeTest")
+function s:MakeTest()
     "get the full path of the current file
     let class_file = expand('%:p')
-    "get the name of the test suite
-    "call the addExtTestSuite script
-    exec ":!addExtTestSuite.pl ".class_file
-    "TODO: open the newly created test file
-
+    let file = system("makeTest ".class_file)
+    exec ":sp ".file
 endfunction
+endif
+
+if !hasmapto('<Plug>JSMakeTest')
+	map <Leader>m <Plug>JSMakeTest
+endif
+noremap <script> <Plug>JSMakeTest <SID>MakeTest
+noremap <SID>MakeTest :call <SID>MakeTest()<CR>
 
 let &cpo = s:cpo_save
 
