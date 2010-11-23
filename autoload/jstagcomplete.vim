@@ -63,7 +63,7 @@ endf
 function! jstagcomplete#Complete(findstart, base) 
     let line = getline('.')
     let start = col('.')
-"Decho("Complete")
+"Decho("base:" . a:base)
     if a:findstart
         let start -= 1
         while start > 0 && line[start - 1] =~ '\a'
@@ -73,14 +73,17 @@ function! jstagcomplete#Complete(findstart, base)
     else
         let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
         let constraints.name = tlib#rx#Escape(a:base)
+		"Context should be everything preceding the cursor pos, until the
+		"first space or non-keyword character is encountered (excluding .)
         let context = strpart(line, 0, start-1)
 		let cstart = start-1
 		while cstart > 0 && line[cstart-1] =~ '[A-Za-z0-9_\$\.]'
 			let cstart -= 1
 		endwhile
 		let context = strpart(context, cstart, len(context) - cstart )
-
-		let s:found_context = 0
+		"Decho("context:" . context)
+		"try to find context object or class
+		let found_context = 0
         "1. attempt to do a contextual tag search by getting constraints
 		let constraints = jstagcomplete#JavaScript(constraints, a:base, context)
         "get matching tags using constraints
@@ -88,16 +91,20 @@ function! jstagcomplete#Complete(findstart, base)
 		"fallback
         "if we did find the context (type) and we don't get any results,
 		"try DOM or JSCore lookup without any constraints 
-
+		"Decho("num tags found: " . len(tags))
 		if len(tags) == 0
-			if s:found_context 
+			"Decho("No tags found")
+			"Decho("found_context = " . found_context)
+			if found_context 
 				"show no completions since we have not found any and we know the
 				"context (type) of the base object
 			else
+				"Decho("No tags found")
 				"since we did not find the context,
 				"do a liberal search on the tags
 				let constraints = copy(tlib#var#Get('jstagcomplete_constraints', 'bg'))
 				let constraints.name = tlib#rx#Escape(a:base)
+				"Decho("constraints.name " .constraints.name)
 				let tags = tlib#tag#Collect(constraints, g:ttagecho_use_extra, 0)
 			endif
 		endif
@@ -187,7 +194,7 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 			let cons.class = class_rx
 			"it is possible to nest singleton 'classes'
 			let cons.kind = cons.kind . 'c'
-			let s:found_context = 1
+			let found_context = 1
 		else
 			"TODO: attempt to infer type of baseObj from context
 			"find the most recent assignment to this var
@@ -216,7 +223,7 @@ function! jstagcomplete#JavaScript(constraints, base, context)
 						let cons.class = class_rx
 						"we are NOT interested in static methods in this case
 						let cons.isstatic = tlib#rx#Escape("no")
-						let s:found_context = 1
+						let found_context = 1
 					endif
 				endif
 			endif
