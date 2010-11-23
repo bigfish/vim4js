@@ -582,18 +582,35 @@ function! s:JSFoldDocComments()
 
 endfunction
 
-if !hasmapto('<Plug>JSFoldFunctions')
-    map <Leader>ff <Plug>JSFoldFunctions
+if !hasmapto('<Plug>JSFoldFunction')
+    map <Leader>ff <Plug>JSFoldFunction
 endif
 
-noremap <script> <Plug>JSFoldFunctions <SID>JSFoldFunctions
-noremap <SID>JSFoldFunctions :call <SID>JSFoldFunctions()<CR>
+noremap <script> <Plug>JSFoldFunction <SID>JSFoldFunction
+noremap <SID>JSFoldFunction :call <SID>JSFoldFunction()<CR>
 
-if !exists(":JSFoldFunctions")
-    command JSFoldFunctions :call s:JSFoldFunctions()
+if !exists(":JSFoldFunction")
+    command JSFoldFunction :call s:JSFoldFunction()
 endif
 
-function! s:JSFoldFunctions()
+function! s:JSFoldFunction()
+   if search('function', 'Wbc')
+        normal zc
+   endif
+endfunction
+
+if !hasmapto('<Plug>JSFoldAllFunctions')
+    map <Leader>fa <Plug>JSFoldAllFunctions
+endif
+
+noremap <script> <Plug>JSFoldAllFunctions <SID>JSFoldAllFunctions
+noremap <SID>JSFoldAllFunctions :call <SID>JSFoldAllFunctions()<CR>
+
+if !exists(":JSFoldAllFunctions")
+    command JSFoldAllFunctions :call s:JSFoldAllFunctions()
+endif
+
+function! s:JSFoldAllFunctions()
     normal mp
     normal gg
     while search('function', 'W')
