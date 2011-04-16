@@ -35,7 +35,9 @@ endif
 " ******************* end copy paste from system ftplugin ******************
 
 "default compiler
-:compiler jslint
+":compiler jslint
+":compiler jstestdriver
+:compiler jslint_jstestdriver
 
 "DOM docs
 let g:HTMLSpecUrl = "http://html5/index.html"
@@ -685,7 +687,9 @@ function! JSSave()
 	normal zt
 	exec "normal ".curlinenum.'G'
 	silent write
-	
+
+	"execute JSLint ?
+    
 endfunction
 
 let b:undo_ftplugin = "setl fo< ofu< com< cms<" 
