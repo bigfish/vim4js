@@ -13,6 +13,7 @@ if !exists('g:jslint_jstestdriver_onwrite')
     let g:jslint_jstestdriver_onwrite = 1
 endif
 
+"config option to not open window automatically
 if !exists('g:jslint_jstestdriver_window')
 	let g:jslint_jstestdriver_window = 1
 endif
@@ -55,7 +56,7 @@ function! JSLintAndTest(saved)
 
 	if g:jslint_jstestdriver_window
 		"lwindow
-		:cw
+		:cwindow
 	endif
 	
 endfunction
