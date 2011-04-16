@@ -12,6 +12,9 @@ let b:did_ftplugin = 1
 
 let s:cpo_save = &cpo
 set cpo&vim
+"when using quickfix, its nice to have files with errors (eg failed tests)
+"open in split window
+set swb=split
 
 " ******************* copied from system ftplugin ***********************
 " Set 'formatoptions' to break comment lines but not other lines,
@@ -638,6 +641,32 @@ if !hasmapto('<Plug>JSBeautify')
 	map <Leader>b <Plug>JSBeautify
 endif
 
+"start JsTestDriver
+if !exists(":JSTestDriver")
+	command! -nargs=0 JSTestDriver !jstestdriver_start
+endif
+
+noremap <script> <Plug>JSTestDriver <SID>JSTestDriver
+noremap <SID>JSTestDriver :JSTestDriver<CR>
+
+if !hasmapto('<Plug>JSTestDriver')
+	map <Leader>t <Plug>JSTestDriver
+endif
+
+"run tests -- see autoload/jstd for function definition
+"this was done to avoid 'function in use' error
+"when this was called and quickfix caused a new js file to load
+if !hasmapto('<Plug>JSRunTests')
+	map <Leader>j <Plug>JSRunTests
+
+    if has("macunix")
+        nmap <D-j> <Plug>JSRunTests
+    else
+        nmap <A-j> <Plug>JSRunTests
+    endif
+endif
+noremap <script> <Plug>JSRunTests <SID>JSRunTests
+noremap <SID>JSRunTests :call jstestdriver#RunTests()<CR>
 
 "when saving file, run jsbeautify 
 function! JSSave()
@@ -718,9 +747,9 @@ endfunction
 "uses (t)ext search as others do not seem to work very well
 nmap <Leader>r :scs find t <C-R>=expand("<cword>")<CR><CR>	
 
-"****************** InstrumentClass (d = debug) ***********
+"****************** InstrumentClass ***********
 if !hasmapto('<Plug>AS3InstrumentClass')
-	map <Leader>d <Plug>AS3InstrumentClass
+	map <Leader>i <Plug>AS3InstrumentClass
 endif
 noremap <script> <Plug>AS3InstrumentClass <SID>InstrumentClass
 noremap <SID>InstrumentClass :call <SID>InstrumentClass()<CR>
