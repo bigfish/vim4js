@@ -14,7 +14,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 "when using quickfix, its nice to have files with errors (eg failed tests)
 "open in split window
-set swb=split
+set swb=split,useopen
 
 " ******************* copied from system ftplugin ***********************
 " Set 'formatoptions' to break comment lines but not other lines,

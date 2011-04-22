@@ -46,10 +46,10 @@ function! JSRunTestDriver(saved)
         setlocal sp=>%s\ 2>&1
     endif
 
-      silent make!
+      silent make
 
 	if g:jstestdriver_lwindow
-		:cope
+		:cwindow
 	endif
 	
 endfunction

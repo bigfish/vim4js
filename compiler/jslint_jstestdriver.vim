@@ -50,14 +50,25 @@ function! JSLintAndTest(saved)
 
     " If check is executed by buffer write - do not jump to first error
 	"if !a:saved
-      silent make
+      silent make!
 	"else
       "silent lmake!
 	"endif
 
 	if g:jslint_jstestdriver_window
-		"lwindow
-		:cwindow
+		"open window if we have errors
+		let qf_errors = getqflist()
+		if !empty(qf_errors) 
+			if(qf_errors[0].text != "all tests passed")
+				:cope
+				:cr
+			else
+				:ccl
+			endif
+		else
+			"else close it
+			:ccl
+		endif
 	endif
 	
 endfunction

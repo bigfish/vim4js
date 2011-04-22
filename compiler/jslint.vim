@@ -54,7 +54,7 @@ function! JSLint(saved)
 	"endif
 
 	if g:jslint_lwindow
-		cwindow
+		:cwindow
 	endif
 	
 endfunction
