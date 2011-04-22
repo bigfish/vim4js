@@ -22,7 +22,8 @@ if exists(':JSLintAndTest') != 2
     command JSLintAndTest :call JSLintAndTest(0)
 endif
 
-CompilerSet efm=Lint\ at\ line\ %l\ character\ %c:\ %m,%m:%f:%l 
+CompilerSet efm=%f:Lint\ at\ line\ %l\ character\ %c:\ %m,%m:%f:%l 
+"CompilerSet makeprg=lint_and_test.pl\ %\ $JSLINT_HOME/options/my_options.js 
 CompilerSet makeprg=lint_and_test.pl\ %\ $JSLINT_HOME/options/my_options.js 
 
 if g:jslint_jstestdriver_onwrite
@@ -49,7 +50,7 @@ function! JSLintAndTest(saved)
 
     " If check is executed by buffer write - do not jump to first error
 	"if !a:saved
-      silent make!
+      silent make
 	"else
       "silent lmake!
 	"endif

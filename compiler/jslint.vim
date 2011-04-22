@@ -21,8 +21,8 @@ if exists(':JSLint') != 2
     command JSLint :call JSLint(0)
 endif
 
-CompilerSet efm=Lint\ at\ line\ %l\ character\ %c:\ %m
-CompilerSet makeprg=jslint\ %\ $JSLINT_HOME/options/my_options.js 
+CompilerSet efm=%f:Lint\ at\ line\ %l\ character\ %c:\ %m
+CompilerSet makeprg=jslint4vim\ %\ $JSLINT_HOME/options/my_options.js 
 
 if g:jslint_onwrite
     augroup javascript
@@ -48,13 +48,13 @@ function! JSLint(saved)
 
     " If check is executed by buffer write - do not jump to first error
 	"if !a:saved
-      silent lmake
+      silent make
 	"else
       "silent lmake!
 	"endif
 
 	if g:jslint_lwindow
-		lwindow
+		cwindow
 	endif
 	
 endfunction
