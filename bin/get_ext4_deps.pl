@@ -2,6 +2,8 @@
 use Data::Dumper;
 #scrape a Ext 4 app .html file with a require() statement, and optionally a paths declaration
 #part the first:: scrape the HTML file for paths and requires
+my $base_path = `pwd`;
+chomp ($base_path);
 my %paths = ();
 my @requires = ();
 my $in_config = 0;
@@ -44,6 +46,12 @@ while (<>) {
 print Dumper(\%paths);
 print "requires: @requires \n";
 
+foreach my $require(@requires) {
+	$require = strip_quotes($require);
+	$require = get_class_path($require);
+	print "$require \n";
+}
+
 exit;
 
 #the file may be given as an argument or STDIN
@@ -58,9 +66,6 @@ my $class_deps_arr = get_deps_array($class_deps);
 my %sub_deps = ();
 
 #handle paths: TODO: parse paths [] declaration  in Ext.Loader.setConfig()
-#currently we assume that current directory + class name with . replaced with / is correct path
-my $base_path = `pwd`;
-chomp ($base_path);
 
 my @all_deps = () ;
 push(@all_deps, @$class_deps_arr);
@@ -77,6 +82,19 @@ foreach (@$class_deps_arr) {
 #DEBUG
 print Dumper(\%sub_deps);
 print Dumper(\@all_deps);
+
+sub get_class_path
+{
+	my $class_path = shift;
+	#replace . with / in $class
+	$class_path =~ s/\./\//g;
+	#expand paths from package names
+	foreach $cls (keys %paths) {
+		$class_path =~ s/$cls/$paths{$cls}/;
+	}
+	$class_path = "$base_path/$class_path.js";
+	return $class_path;
+}
 
 sub dedupe_array
 {
