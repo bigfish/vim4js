@@ -1,6 +1,51 @@
 #!/usr/bin/env perl
 use Data::Dumper;
-#scrape a Ext 4 class definition file for dependencies
+#scrape a Ext 4 app .html file with a require() statement, and optionally a paths declaration
+#part the first:: scrape the HTML file for paths and requires
+my %paths = ();
+my @requires = ();
+my $in_config = 0;
+my $in_paths = 0;
+while (<>) {
+	if ($_ =~ /Ext.Loader.setConfig\(\{/) {
+		$in_config = 1;
+	}
+	if ($_ =~ /\<\/script/) {
+		$in_config = 0;
+	}
+	#assume jslint compliant formatting
+	if ($in_config and $_ =~ /^\s*paths\s*\:\s*\{\s*$/ ) {
+		$in_paths = 1;
+	}
+	if($in_paths and $_ =~ /^\s*\}\,?\s*$/) {
+		$in_paths = 0;
+	}
+	if($in_paths) {
+		if ($_ =~ /^\s*['"]([^'"]*)['"]\s*\:\s*['"]([^'"]*)['"]\,?\s$/) {
+			$paths{$1} = $2;
+		}
+	}
+	if($_ =~ /Ext\.require\(([^)]*)\)/) {
+		#normalize array
+		my $required = $1;
+		if ($required =~ /\s*\[([^]]*)\]\s*/) {
+			$required = $1;
+			if($required =~ /\,/) {
+				my @required = split(/\s*\,\s*/, $required);
+				push(@requires, @required);
+			} else {
+				push(@requires, $required);
+		   }	
+		} else {
+			push(@requires, $required);
+		}
+	}
+}
+print Dumper(\%paths);
+print "requires: @requires \n";
+
+exit;
+
 #the file may be given as an argument or STDIN
 my @lines = <>;
 #get hash of dependencies 
