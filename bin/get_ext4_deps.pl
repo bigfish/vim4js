@@ -43,45 +43,24 @@ while (<>) {
 		}
 	}
 }
-print Dumper(\%paths);
-print "requires: @requires \n";
+#print Dumper(\%paths);
 
-foreach my $require(@requires) {
-	$require = strip_quotes($require);
-	$require = get_class_path($require);
-	print "$require \n";
-}
-
-exit;
-
-#the file may be given as an argument or STDIN
-my @lines = <>;
-#get hash of dependencies 
-my $class_deps = parse_class_lines(\@lines);
-#get flattened array ref of dependecies
-my $class_deps_arr = get_deps_array($class_deps);
-#now that we have the immediate dependencies of the file we were given
-#we must lookup the files where those classes are defined and get theirs
-#this is represented as a hash (%sub_deps) of ClassName => [deps]
 my %sub_deps = ();
-
-#handle paths: TODO: parse paths [] declaration  in Ext.Loader.setConfig()
-
 my @all_deps = () ;
-push(@all_deps, @$class_deps_arr);
 
-#add all the subdependencies 
-foreach (@$class_deps_arr) {
-	$sub_deps{$_} = dedupe_array( get_file_deps( get_file_path($_)));
-	#deduplicate subdependency arrays (mixins may cause duplicate dependencies)
-	push @all_deps, @{$sub_deps{$_}}
+foreach (@requires) {
+	my $require = strip_quotes($_);
+	$sub_deps{$require} = dedupe_array( get_file_deps( get_class_path($require)));
+	push @all_deps, @{$sub_deps{$require}}
 }
 
-@all_deps = dedupe_array(\@all_deps);
+$all_deps = dedupe_array(\@all_deps);
 
 #DEBUG
-print Dumper(\%sub_deps);
-print Dumper(\@all_deps);
+#print Dumper(\%sub_deps);
+#print Dumper(\@all_deps);
+my @files = map { get_class_path($_) } @$all_deps;
+print Dumper(\@files);
 
 sub get_class_path
 {
@@ -92,7 +71,8 @@ sub get_class_path
 	foreach $cls (keys %paths) {
 		$class_path =~ s/$cls/$paths{$cls}/;
 	}
-	$class_path = "$base_path/$class_path.js";
+	#$class_path = "$base_path/$class_path.js";
+	$class_path = "$class_path.js";
 	return $class_path;
 }
 
@@ -123,9 +103,8 @@ sub get_file_deps
 				$deps = $sub_deps{$_};
 				next;
 			} else {
-				#print "recursing for $_...\n";
 				#only find deps if not already indexed
-				$deps = get_file_deps(get_file_path($_));
+				$deps = get_file_deps(get_class_path($_));
 				#add to global index
 				$sub_deps{$_} = $deps;
 				#add to deps array which will be returned for this class 
