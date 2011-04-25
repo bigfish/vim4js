@@ -18,12 +18,18 @@ my $base_path = `pwd`;
 chomp ($base_path);
 
 foreach (@$class_deps_arr) {
-	print "processing $_ \n";
 	$sub_deps{$_} = get_file_deps(get_file_path($_));
 }
 
+#finally, flatten all the dependencies into a single array
+my @all_deps = ();
+foreach (keys %sub_deps) {
+	push @all_deps, @{$sub_deps{$_}}
+}
+
 #DEBUG
-print Dumper(\%sub_deps);
+#print Dumper(\%sub_deps);
+print Dumper(\@all_deps);
 
 sub get_file_deps
 {
