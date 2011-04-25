@@ -5,8 +5,18 @@ use Data::Dumper;
 my @lines = <>;
 
 my $class_deps = parse_class_lines(\@lines);
-print Dumper(get_deps_array($class_deps));
+#now that we have the immediate dependencies of the file we were given
+#we must lookup the files where those classes are defined and get theirs
+#this is represented as a hash of ClassName => [deps]
+my %sub_deps = ();
+
+foreach (@$class_deps) {
+	print "getting deps for class: $_ \n";
+}
+#print Dumper(get_deps_array($class_deps));
+
 #TODO: process files recursively
+
 sub get_deps_array
 {
 	#gets deps info hash as argument
