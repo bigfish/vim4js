@@ -17,19 +17,32 @@ my %sub_deps = ();
 my $base_path = `pwd`;
 chomp ($base_path);
 
-foreach (@$class_deps_arr) {
-	$sub_deps{$_} = get_file_deps(get_file_path($_));
-}
+my @all_deps = () ;
+push(@all_deps, @$class_deps_arr);
 
-#finally, flatten all the dependencies into a single array
-my @all_deps = ();
-foreach (keys %sub_deps) {
+#add all the subdependencies 
+foreach (@$class_deps_arr) {
+	$sub_deps{$_} = dedupe_array( get_file_deps( get_file_path($_)));
+	#deduplicate subdependency arrays (mixins may cause duplicate dependencies)
 	push @all_deps, @{$sub_deps{$_}}
 }
 
+@all_deps = dedupe_array(\@all_deps);
+
 #DEBUG
-#print Dumper(\%sub_deps);
+print Dumper(\%sub_deps);
 print Dumper(\@all_deps);
+
+sub dedupe_array
+{
+	my $arr = shift;
+	my %seen = ();
+	my @uniq = ();
+   	foreach $item (@{$arr}) {
+   		push(@uniq, $item) unless $seen{$item}++;
+   	}
+	return \@uniq;
+}
 
 sub get_file_deps
 {
@@ -42,13 +55,18 @@ sub get_file_deps
 	#recurse
 	if(scalar @$class_deps_arr) {
 		foreach (@$class_deps_arr) {
+			my $deps;
 			if(exists $sub_deps{$_}) {
-				print "skipping $_ \n";
+				$deps = $sub_deps{$_};
 				next;
 			} else {
-				print "recursing for $_...\n";
+				#print "recursing for $_...\n";
 				#only find deps if not already indexed
-				$sub_deps{$_} = get_file_deps(get_file_path($_));
+				$deps = get_file_deps(get_file_path($_));
+				#add to global index
+				$sub_deps{$_} = $deps;
+				#add to deps array which will be returned for this class 
+				push @$class_deps_arr, @$deps;
 			}
 		}
 	}
