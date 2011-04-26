@@ -2,12 +2,14 @@
 use Data::Dumper;
 #scrape a Ext 4 app .html file with a require() statement, and optionally a paths declaration
 #part the first:: scrape the HTML file for paths and requires
-my $base_path = `pwd`;
-chomp ($base_path);
+#my $base_path = `pwd`;
+#chomp ($base_path);
 my %paths = ();
+my %files = ();
 my @requires = ();
 my $in_config = 0;
 my $in_paths = 0;
+
 while (<>) {
 	if ($_ =~ /Ext.Loader.setConfig\(\{/) {
 		$in_config = 1;
@@ -48,6 +50,7 @@ while (<>) {
 my %sub_deps = ();
 my @all_deps = () ;
 
+#get dependencies recursively for each required class
 foreach (@requires) {
 	my $require = strip_quotes($_);
 	$sub_deps{$require} = dedupe_array( get_file_deps( get_class_path($require)));
@@ -56,24 +59,38 @@ foreach (@requires) {
 
 $all_deps = dedupe_array(\@all_deps);
 
-#DEBUG
-#print Dumper(\%sub_deps);
-#print Dumper(\@all_deps);
-my @files = map { get_class_path($_) } @$all_deps;
-print Dumper(\@files);
+#sort dependencies so they are in order from least dependent to most
 
+#get files for dependencies
+#my @files = map { get_class_path($_) } @$all_deps;
+
+#DEBUG
+print Dumper(\%sub_deps);
+#print Dumper(\@all_deps);
+print Dumper(\%files);
+
+
+################################### FUNCTIONS ############################
 sub get_class_path
 {
-	my $class_path = shift;
-	#replace . with / in $class
-	$class_path =~ s/\./\//g;
-	#expand paths from package names
-	foreach $cls (keys %paths) {
-		$class_path =~ s/$cls/$paths{$cls}/;
+	my $class_name = shift;
+	my $class_path = $class_name;
+
+	if(exists $files{$class_name}) {
+		return $files{$class_name};
+	} else {
+		#replace . with / in $class
+		$class_path =~ s/\./\//g;
+		#expand paths from package names
+		foreach $cls (keys %paths) {
+			$class_path =~ s/$cls/$paths{$cls}/;
+		}
+		#$class_path = "$base_path/$class_path.js";
+		$class_path = "$class_path.js";
+		#cache in files hash
+		$files{$class_name} = $class_path;
+		return $class_path;
 	}
-	#$class_path = "$base_path/$class_path.js";
-	$class_path = "$class_path.js";
-	return $class_path;
 }
 
 sub dedupe_array
