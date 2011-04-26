@@ -59,18 +59,118 @@ foreach (@requires) {
 
 $all_deps = dedupe_array(\@all_deps);
 
-#sort dependencies so they are in order from least dependent to most
+#sort dependencies so they are in order 
 
-#get files for dependencies
-#my @files = map { get_class_path($_) } @$all_deps;
+my $sorted_deps = $all_deps;
+#print Dumper($sorted_deps);
+my $last_result = '';
 
+while( $last_result ne join(':', @$sorted_deps)) {
+	print "iterating \n";
+	$last_result = join(':', @$sorted_deps);
+	foreach(@$all_deps) {
+		$sorted_deps = insert_class_into_deps($sorted_deps, $_);
+	} 
+}
+
+# output file paths in required order
+foreach (@$sorted_deps) {
+	print $_;
+	print Dumper($sub_deps{$_});
+}
 #DEBUG
-print Dumper(\%sub_deps);
+#print Dumper(\%sub_deps);
 #print Dumper(\@all_deps);
-print Dumper(\%files);
-
+#print Dumper(\%files);
+#print Dumper($sorted_deps);
 
 ################################### FUNCTIONS ############################
+
+#insert given class at correct position so its dependencies are satisfied
+sub insert_class_into_deps
+{
+	my $deps_arr = shift;
+	my $class_name = shift;
+	my $classes = remove_from_array($deps_arr, $class_name);
+	my $class_deps = $sub_deps{$class_name};
+	my $pos = 1;
+	my @previous_classes;
+	my $num_classes = scalar @$classes;
+	#if no deps, put at start of array
+	if(!scalar @$class_deps) {
+		unshift(@$classes, $class_name);
+	} else {
+		#print "removed $class_name from @$classes \n";
+		foreach (@$classes) {
+			if ($pos >= $num_classes) {
+				die "unable to satisfy dependencies of $class_name \n";
+			}
+			@previous_classes = @$classes[0..$pos];
+			#if any are missing, try next position
+			if(!has_depends(\@previous_classes, $class_name)) {
+				$pos++;
+				next;
+			} else {
+				#print "satisfied all dependencies for $class_name \n";
+				last;
+			}
+		}
+		my $idx = $pos + 1;
+		#pos is the correct position for this class
+		splice @$classes, $idx, 0, $class_name;
+		#print "added $class_name at POS: $idx\n";
+	}
+	return $classes;
+}
+
+sub has_depends
+{
+	my $depends = shift;
+	my $class_name = shift;
+	my $class_deps = $sub_deps{$class_name};
+	foreach $dep (@$class_deps) {
+		if(!in_array($depends, $dep)) {
+			#print "$dep is not satisfied \n";
+			return 0;
+		}
+		#print "satisfied dependency: $dep  for $class_name \n";
+	}
+	return 1;
+}
+
+sub in_array
+{
+	#print "checking if $item is in @$array \n";
+	my $array = shift;
+	my $item = shift;
+	undef %is_in_array;
+    for (@$array) { $is_in_array{$_} = 1 }
+	return $is_in_array{$item};
+	#my $items_str = join(" ", @$arr);
+	#if ($items_str =~ /\s$item\s/) {
+		#return 1;
+	#} else {
+		#return 0;
+	#}
+}
+sub remove_from_array
+{
+	my $arr = shift;
+	my $item = shift;
+	my @new = @$arr;
+	my $len = @new;
+	#print "NEW @new";
+	for (0..$len) {
+		#print $new[$_] . " eq $item?\n" ;
+		if ($new[$_] eq $item) {
+			#print "REMOVING $item \n";
+			splice @new, $_, 1;
+			return \@new;
+		}
+	}
+	print "did not find $item in @new \n";
+}
+
 sub get_class_path
 {
 	my $class_name = shift;
