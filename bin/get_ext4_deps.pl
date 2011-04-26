@@ -75,8 +75,7 @@ while( $last_result ne join(':', @$sorted_deps)) {
 
 # output file paths in required order
 foreach (@$sorted_deps) {
-	print $_;
-	print Dumper($sub_deps{$_});
+	print $files{$_} . " \n";
 }
 #DEBUG
 #print Dumper(\%sub_deps);
@@ -100,7 +99,6 @@ sub insert_class_into_deps
 	if(!scalar @$class_deps) {
 		unshift(@$classes, $class_name);
 	} else {
-		#print "removed $class_name from @$classes \n";
 		foreach (@$classes) {
 			if ($pos >= $num_classes) {
 				die "unable to satisfy dependencies of $class_name \n";
@@ -116,7 +114,7 @@ sub insert_class_into_deps
 			}
 		}
 		my $idx = $pos + 1;
-		#pos is the correct position for this class
+		#pos is the correct position for this class - insert it there
 		splice @$classes, $idx, 0, $class_name;
 		#print "added $class_name at POS: $idx\n";
 	}
@@ -140,35 +138,26 @@ sub has_depends
 
 sub in_array
 {
-	#print "checking if $item is in @$array \n";
 	my $array = shift;
 	my $item = shift;
 	undef %is_in_array;
     for (@$array) { $is_in_array{$_} = 1 }
 	return $is_in_array{$item};
-	#my $items_str = join(" ", @$arr);
-	#if ($items_str =~ /\s$item\s/) {
-		#return 1;
-	#} else {
-		#return 0;
-	#}
 }
+
 sub remove_from_array
 {
 	my $arr = shift;
 	my $item = shift;
 	my @new = @$arr;
 	my $len = @new;
-	#print "NEW @new";
 	for (0..$len) {
-		#print $new[$_] . " eq $item?\n" ;
 		if ($new[$_] eq $item) {
-			#print "REMOVING $item \n";
 			splice @new, $_, 1;
 			return \@new;
 		}
 	}
-	print "did not find $item in @new \n";
+	print "error in remove_from_array: did not find $item in @new \n";
 }
 
 sub get_class_path
