@@ -50,29 +50,30 @@ while (<>) {
 my %sub_deps = ();
 my @all_deps = () ;
 
+@requires = map { strip_quotes($_) } @requires;
+
 #get dependencies recursively for each required class
-foreach (@requires) {
-	my $require = strip_quotes($_);
+foreach $require(@requires) {
 	$sub_deps{$require} = dedupe_array( get_file_deps( get_class_path($require)));
 	push @all_deps, @{$sub_deps{$require}}
 }
 
+#add the requires as dependencies also
+push (@all_deps, @requires);
+
 $all_deps = dedupe_array(\@all_deps);
 
 #sort dependencies so they are in order 
-
 my $sorted_deps = $all_deps;
 #print Dumper($sorted_deps);
 my $last_result = '';
 
 while( $last_result ne join(':', @$sorted_deps)) {
-	print "iterating \n";
 	$last_result = join(':', @$sorted_deps);
 	foreach(@$all_deps) {
 		$sorted_deps = insert_class_into_deps($sorted_deps, $_);
 	} 
 }
-
 # output file paths in required order
 foreach (@$sorted_deps) {
 	print $files{$_} . " \n";
