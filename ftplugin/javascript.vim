@@ -633,7 +633,8 @@ function! s:JSFoldAllFunctions()
 endfunction
 
 if !exists(":JSBeautify")
-	command! -range=% -nargs=0 JSBeautify <line1>,<line2>!$JSBEAUTIFY/bin/beautify_js
+	"command! -range=% -nargs=0 JSBeautify <line1>,<line2>!$JSBEAUTIFY/bin/beautify_js
+	command! -range=% -nargs=0 JSBeautify <line1>,<line2>!$JSBEAUTIFY/python/jsbeautifier.py -ijk
 endif
 
 noremap <script> <Plug>JSBeautify <SID>JSBeautify

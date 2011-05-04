@@ -75,9 +75,8 @@ while( $last_result ne join(':', @$sorted_deps)) {
 	} 
 }
 # output file paths in required order
-foreach (@$sorted_deps) {
-	print $files{$_} . " \n";
-}
+print map { $files{$_} . " " } @$sorted_deps;
+
 #DEBUG
 #print Dumper(\%sub_deps);
 #print Dumper(\@all_deps);
