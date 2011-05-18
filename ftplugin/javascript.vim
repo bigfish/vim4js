@@ -14,7 +14,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 "when using quickfix, its nice to have files with errors (eg failed tests)
 "open in split window
-set swb=split,useopen
+set swb=useopen,split
 
 " ******************* copied from system ftplugin ***********************
 " Set 'formatoptions' to break comment lines but not other lines,
@@ -914,8 +914,13 @@ if !exists("*s:MakeTest")
 function s:MakeTest()
     "get the full path of the current file
     let class_file = expand('%:p')
-    let file = system("makeTest ".class_file)
-    exec ":sp ".file
+    let file = system("make_js_test ".class_file)
+    if bufexists(file)
+        let bufnum = bufnr(file)
+        exec ":sb ".bufnum
+    else
+        exec ":sp ".file
+    endif
 endfunction
 endif
 
