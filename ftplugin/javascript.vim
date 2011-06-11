@@ -941,6 +941,17 @@ endfunction
 
 command! -range=% -nargs=0 NodeRun <line1>,<line2>call s:NodeRun()
 
+if has("macunix")
+	vmap <buffer> <D-r> :NodeRun<CR>
+else
+	vmap <buffer> <A-r> :NodeRun<CR>
+endif
+
+"compile CoffeeScript in place
+command! -range=% CoffeeCompile <line1>,<line2>:!coffee -scb
+
+vmap <buffer> <Leader>c :CoffeeCompile<CR>
+
 let &cpo = s:cpo_save
 
 unlet s:cpo_save
