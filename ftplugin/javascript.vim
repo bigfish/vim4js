@@ -930,6 +930,17 @@ endif
 noremap <script> <Plug>JSMakeTest <SID>MakeTest
 noremap <SID>MakeTest :call <SID>MakeTest()<CR>
 
+" run code in node
+function! s:NodeRun() range
+    let lines = getline(a:firstline, a:lastline)
+    silent call writefile(lines, '.nodebuf')
+    let result = system('node .nodebuf')
+    silent call delete('.nodebuf') 
+    echo result
+endfunction
+
+command! -range=% -nargs=0 NodeRun <line1>,<line2>call s:NodeRun()
+
 let &cpo = s:cpo_save
 
 unlet s:cpo_save
