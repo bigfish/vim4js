@@ -34,10 +34,8 @@ endif
 
 " ******************* end copy paste from system ftplugin ******************
 
-"default compiler
-":compiler jslint
-":compiler jstestdriver
-:compiler jslint_jstestdriver
+"default compiler --jslint is optional
+:compiler jslint
 
 "DOM docs
 let g:HTMLSpecUrl = "http://html5/index.html"
@@ -49,12 +47,10 @@ let s:global = 0
 
 "tab stuff should be in .vimrc
 "expand tabs to 4 spaces
-"setlocal noexpandtab
-"setlocal shiftwidth=4
-"setlocal shiftround
-"setlocal tabstop=4
-
-nnoremap <silent> <leader>b :call JSBeautify()<cr>
+setlocal expandtab
+setlocal shiftwidth=4
+setlocal shiftround
+setlocal tabstop=4
 
 "cleanAndSave
 
@@ -630,67 +626,6 @@ function! s:JSFoldAllFunctions()
     endwhile
     "restore pos
     normal 'p
-endfunction
-
-if !exists(":JSBeautify")
-	"command! -range=% -nargs=0 JSBeautify <line1>,<line2>!$JSBEAUTIFY/bin/beautify_js
-	command! -range=% -nargs=0 JSBeautify <line1>,<line2>!$JSBEAUTIFY/python/jsbeautifier.py -ijk
-endif
-
-noremap <script> <Plug>JSBeautify <SID>JSBeautify
-noremap <SID>JSBeautify :JSBeautify<CR>
-
-if !hasmapto('<Plug>JSBeautify')
-	map <Leader>b <Plug>JSBeautify
-endif
-
-"start JsTestDriver
-if !exists(":JSTestDriver")
-	command! -nargs=0 JSTestDriver !jstestdriver_start
-endif
-
-noremap <script> <Plug>JSTestDriver <SID>JSTestDriver
-noremap <SID>JSTestDriver :JSTestDriver<CR>
-
-if !hasmapto('<Plug>JSTestDriver')
-	map <Leader>t <Plug>JSTestDriver
-endif
-
-"run tests -- see autoload/jstd for function definition
-"this was done to avoid 'function in use' error
-"when this was called and quickfix caused a new js file to load
-if !hasmapto('<Plug>JSRunTests')
-	map <Leader>j <Plug>JSRunTests
-
-    if has("macunix")
-        nmap <D-j> <Plug>JSRunTests
-    else
-        nmap <A-j> <Plug>JSRunTests
-    endif
-endif
-noremap <script> <Plug>JSRunTests <SID>JSRunTests
-noremap <SID>JSRunTests :call jstestdriver#RunTests()<CR>
-
-"when saving file, run jsbeautify 
-function! JSSave()
-	"JSBeautify loses position in file, removes markers :(
-	"have to do some Vim gymnastics to save and restore position
-	"using linenumbers only
-	let curlinenum = line('.')
-	normal H
-	let toplinenum = line('.')
-
-	exec ':JSBeautify'
-
-	"apply current tab settings
-	exec ':retab'
-	exec "normal ".toplinenum.'G'
-	normal zt
-	exec "normal ".curlinenum.'G'
-	silent write
-
-	"execute JSLint ?
-    
 endfunction
 
 let b:undo_ftplugin = "setl fo< ofu< com< cms<" 

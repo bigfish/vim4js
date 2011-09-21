@@ -177,7 +177,7 @@ endif
 
 setlocal foldmethod=syntax
 syn sync fromstart
-set foldlevel=8
+set foldlevel=10
 
 " Define the default highlighting.
 " For version 5.7 and earlier: only when not done already
