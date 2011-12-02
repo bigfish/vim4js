@@ -1,22 +1,55 @@
-Tag based Auto-completion for Javascript
 
-requires:
-    exuberant ctags
-    perl
-    vim with +perl
-    tlib
+## Vim4JS -- Vim for Javascript
 
-warning: work in progress!
+A collection of plugins for effective Javascript editing in Vim.
 
-usage:
+Combines a few other plugins, sometimes with minor tweaks, as well as my own jslint compiler. 
 
+### Requirements
 
-generate tags using genExtTags script
+#### [nodelint](https://github.com/tav/nodelint)
 
-add this to .vimrc
+##### Installation (after Node.js, and NPM have been installed)
 
-autocmd FileType javascript JSTagCompleteOn complete
+    sudo npm install -g nodelint
 
-"add javascript tags
-:autocmd BufNewFile,BufRead *.js,*.html set tags+=$EXT_HOME/tags
+#### [vim-nodelint](https://github.com/bigfish/vim-nodelint)
+
+I recommend you use pathogen to install this into your bundle/ directory. Or you can install it manually.
+
+### Contents
+
+#### Filetype settings
+
+In `after/ftplugin/javascript.vim`.
+
+Sets tabwidth to 4, and always expands tabs to spaces. 
+Adds a couple of keymaps: 
+  
+  - Shift + Enter  --> addds semicolon to end of line
+  - Ctrl + Shift + Enter --> adds a comma at the end of the line
+
+Also sets the compiler to 'nodelint' (see compiler)
+
+#### compiler/nodelint.vim
+
+Runs nodelint (see requirements) when a Javascript or JSON file is saves, and displays errors
+in the quickfix window. (actually, the location list). It will jump to the location of the first error.
+
+##### Configuration Options
+
+In .vimrc:
+
+You can set a global nodelint configuration file, using the g:NodelintConfig option. 
+
+Or it will search up the tree from the current file, and use the first file called 'nodelint-config.js'
+that it finds. I have one in my home directory as a catch-all.
+
+Setting g:NodelintPassive = 1 will cause the errors not to show automatically, and it will not jump to the
+first error. Then you have to open the location list yourself (and close it yourself.) Hitting enter while
+over an error will jump to the error location.
+
+" nodelint
+"let g:NodelintConfig = $HOME . '/nodelint-config.js'
+"let g:NodelintPassive = 1
 
