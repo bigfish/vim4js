@@ -136,9 +136,9 @@ endif "DOM/HTML/CSS
 
 "" Code blocks
 syntax cluster javaScriptAll       contains=javaScriptComment,javaScriptLineComment,javaScriptDocComment,javaScriptStringD,javaScriptStringS,javaScriptRegexpString,javaScriptNumber,javaScriptFloat,javaScriptLabel,javaScriptSource,javaScriptType,javaScriptOperator,javaScriptBoolean,javaScriptNull,javaScriptFunction,javaScriptConditional,javaScriptRepeat,javaScriptBranch,javaScriptStatement,javaScriptGlobalObjects,javaScriptExceptions,javaScriptFutureKeys,javaScriptDomErrNo,javaScriptDomNodeConsts,javaScriptHtmlEvents,javaScriptDotNotation
-syntax region  javaScriptBracket   matchgroup=javaScriptBracket transparent start="\[" end="\]" contains=@javaScriptAll,javaScriptParensErrB,javaScriptParensErrC,javaScriptBracket,javaScriptParen,javaScriptBlock,@htmlPreproc transparent fold
-syntax region  javaScriptParen     matchgroup=javaScriptParen   transparent start="("  end=")"  contains=@javaScriptAll,javaScriptParensErrA,javaScriptParensErrC,javaScriptParen,javaScriptBracket,javaScriptBlock,@htmlPreproc transparent fold
-syntax region  javaScriptBlock     matchgroup=javaScriptBlock   transparent start="{"  end="}"  contains=@javaScriptAll,javaScriptParensErrA,javaScriptParensErrB,javaScriptParen,javaScriptBracket,javaScriptBlock,@htmlPreproc transparent fold
+syntax region  javaScriptBracket   matchgroup=javaScriptBracket transparent start="\[" end="\]" contains=@javaScriptAll,javaScriptParensErrB,javaScriptParensErrC,javaScriptBracket,javaScriptParen,javaScriptBlock,@htmlPreproc fold
+syntax region  javaScriptParen     matchgroup=javaScriptParen   transparent start="("  end=")"  contains=@javaScriptAll,javaScriptParensErrA,javaScriptParensErrC,javaScriptParen,javaScriptBracket,javaScriptBlock,@htmlPreproc
+syntax region  javaScriptBlock     matchgroup=javaScriptBlock   transparent start="{"  end="}"  contains=@javaScriptAll,javaScriptParensErrA,javaScriptParensErrB,javaScriptParen,javaScriptBracket,javaScriptBlock,@htmlPreproc fold
 
 "" catch errors caused by wrong parenthesis
 syntax match   javaScriptParensError    ")\|}\|\]"
@@ -153,31 +153,25 @@ if main_syntax == "javascript"
 endif
 
 "" Fold control
-"if exists("b:javascript_fold")
-	syntax match   javaScriptFunction       /\<function\>/ nextgroup=javaScriptFuncName skipwhite
-	syntax match   javaScriptOpAssign       /=\@<!=/ nextgroup=javaScriptFuncBlock skipwhite skipempty
-	syntax region  javaScriptFuncName       contained matchgroup=javaScriptFuncName start=/\%(\$\|\w\)*\s*(/ end=/)/ contains=javaScriptLineComment,javaScriptComment nextgroup=javaScriptFuncBlock skipwhite skipempty
-	syntax region  javaScriptFuncBlock      contained matchgroup=javaScriptFuncBlock start="{" end="}" contains=@javaScriptAll,javaScriptParensErrA,javaScriptParensErrB,javaScriptParen,javaScriptBracket,javaScriptBlock fold
+if exists("b:javascript_fold")
+    syntax match   javaScriptFunction       /\<function\>/ nextgroup=javaScriptFuncName skipwhite
+    syntax match   javaScriptOpAssign       /=\@<!=/ nextgroup=javaScriptFuncBlock skipwhite skipempty
+    syntax region  javaScriptFuncName       contained matchgroup=javaScriptFuncName start=/\%(\$\|\w\)*\s*(/ end=/)/ contains=javaScriptLineComment,javaScriptComment nextgroup=javaScriptFuncBlock skipwhite skipempty
+    syntax region  javaScriptFuncBlock      contained matchgroup=javaScriptFuncBlock start="{" end="}" contains=@javaScriptAll,javaScriptParensErrA,javaScriptParensErrB,javaScriptParen,javaScriptBracket,javaScriptBlock fold
 
-	if &l:filetype=='javascript' && !&diff
-	  " Fold setting
-	  " Redefine the foldtext (to show a JS function outline) and foldlevel
-	  " only if the entire buffer is JavaScript, but not if JavaScript syntax
-	  " is embedded in another syntax (e.g. HTML).
-	  "setlocal foldmethod=syntax
-	  "setlocal foldlevel=4
-	endif
-"else
-    "syntax keyword javaScriptFunction       function
-    "setlocal foldmethod<
-    "setlocal foldlevel<
-"endif
-
-"syn region myFold start="{" end="}" transparent fold
-
-setlocal foldmethod=syntax
-syn sync fromstart
-set foldlevel=10
+    if &l:filetype=='javascript' && !&diff
+      " Fold setting
+      " Redefine the foldtext (to show a JS function outline) and foldlevel
+      " only if the entire buffer is JavaScript, but not if JavaScript syntax
+      " is embedded in another syntax (e.g. HTML).
+      setlocal foldmethod=syntax
+      setlocal foldlevel=8
+    endif
+else
+    syntax keyword javaScriptFunction       function
+    setlocal foldmethod<
+    setlocal foldlevel<
+endif
 
 " Define the default highlighting.
 " For version 5.7 and earlier: only when not done already

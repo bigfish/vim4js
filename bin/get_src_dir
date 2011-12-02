@@ -1,4 +1,0 @@
-#!/bin/bash
-PWD=$(pwd)
-#get 'src' dir above current directory
-echo "${PWD%src*}src"
