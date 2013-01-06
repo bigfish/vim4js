@@ -12,12 +12,26 @@ imap <Leader>, <Esc>A,<CR>
 nmap <Leader>, A,<Esc>
 
 compiler jshint
+
+"****************** MAPS ***************************************
+
+if !hasmapto('<Plug>JSAppendSemicolon')
+map <localleader>; <Plug>JSAppendSemicolon
+endif
+
+nnoremap <script> <Plug>JSAppendSemicolon <SID>AppendSemicolon
+nnoremap <SID>AppendSemicolon :call <SID>AppendSemicolon()<CR>
+
 "****************** UTILITY FUNCTIONS ***************************
+
+function s:AppendSemicolon()
+execute "normal! mqA;\<esc>`q"
+endfunction
 
 "****************** log function call **************************
 "
 if !hasmapto('<Plug>JSLogFunctionCall')
-	map <Leader>i <Plug>JSLogFunctionCall
+map <Leader>i <Plug>JSLogFunctionCall
 endif
 
 noremap <script> <Plug>JSLogFunctionCall <SID>LogFunctionCall
