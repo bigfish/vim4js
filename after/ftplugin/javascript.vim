@@ -22,11 +22,27 @@ endif
 nnoremap <script> <Plug>JSAppendSemicolon <SID>AppendSemicolon
 nnoremap <SID>AppendSemicolon :call <SID>AppendSemicolon()<CR>
 
-"****************** UTILITY FUNCTIONS ***************************
-
-function s:AppendSemicolon()
+function! s:AppendSemicolon()
 execute "normal! mqA;\<esc>`q"
 endfunction
+
+function! s:OneVar(start, end)
+
+        for lineNo in range(a:start, a:end)
+                if lineNo == a:start && lineNo != a:end
+                        exec lineNo . ":s/;/,/"
+                elseif lineNo == a:end
+                        exec lineNo . ":s/var/   /"
+                else
+                        exec lineNo . ":s/var/   /"
+                        exec lineNo . ":s/;/,/"
+                endif
+        endfor
+endf
+
+:command! -range -nargs=0 JSOneVar call <SID>OneVar(<line1>,<line2>)
+
+vnoremap <buffer> <localleader>o :JSOneVar<CR>
 
 "****************** log function call **************************
 "
