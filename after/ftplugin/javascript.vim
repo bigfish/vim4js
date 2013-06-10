@@ -24,7 +24,7 @@ nnoremap <SID>AppendSemicolon :call <SID>AppendSemicolon()<CR>
 
 "****************** UTILITY FUNCTIONS ***************************
 
-function s:AppendSemicolon()
+function! s:AppendSemicolon()
 execute "normal! mqA;\<esc>`q"
 endfunction
 
