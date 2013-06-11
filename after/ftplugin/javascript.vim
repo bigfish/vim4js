@@ -44,7 +44,7 @@ endf
 
 :command! -range -nargs=0 JSOneVar call <SID>OneVar(<line1>,<line2>)
 
-vnoremap <buffer> <localleader>o :JSOneVar<CR>
+vnoremap <buffer> <localleader>v :JSOneVar<CR>
 
 "****************** log function call **************************
 "
