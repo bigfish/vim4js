@@ -29,14 +29,13 @@ execute "normal! mqA;\<esc>`q"
 endfunction
 
 function! s:OneVar(start, end)
-
         for lineNo in range(a:start, a:end)
-                if lineNo == a:start && lineNo != a:end
-                        exec lineNo . ":s/;/,/"
-                elseif lineNo == a:end
-                        exec lineNo . ":s/var/   /"
-                else
-                        exec lineNo . ":s/var/   /"
+				"remove 'var' statements, except first
+                if lineNo != a:start
+						exec lineNo . ":s/var/   /"
+                endif
+				"replace semicolons with commas, except last
+                if lineNo != a:end
                         exec lineNo . ":s/;/,/"
                 endif
         endfor
@@ -135,3 +134,22 @@ function! s:LogFunctionCall()
 		endif
 	end
 endfunction
+
+
+function! s:FuncjsToggle()
+
+	if g:colors_name == 'funcjs'
+		exe 'colorscheme ' . g:original_colorscheme
+	else
+		let g:original_colorscheme = g:colors_name
+		echo g:original_colorscheme
+		colorscheme funcjs
+	end
+endfunction
+
+"define a mapping to temporarily set the colorscheme to funcjs
+if !hasmapto('<Plug>FuncjsToggle')
+	map <localleader>t <Plug>FuncjsToggle
+endif
+nnoremap <script> <Plug>FuncjsToggle <SID>FuncjsToggle
+nnoremap <SID>FuncjsToggle :call <SID>FuncjsToggle()<CR>
