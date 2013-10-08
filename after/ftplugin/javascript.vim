@@ -140,11 +140,21 @@ function! s:FuncjsToggle()
 
 	if g:colors_name == 'funcjs'
 		exe 'colorscheme ' . g:original_colorscheme
+		augroup JSFUNC
+				au!
+		augroup END
+
 	else
+		augroup JSFUNC
+				au!
+				au InsertLeave,TextChanged *.js colorscheme funcjs
+		augroup END
 		let g:original_colorscheme = g:colors_name
 		echo g:original_colorscheme
 		colorscheme funcjs
 	end
+
+
 endfunction
 
 "define a mapping to temporarily set the colorscheme to funcjs
