@@ -351,7 +351,42 @@ function! FunScope()
 	endfor
 
 	call matchadd('Comment', '\/\/.*', 100) 
+
 	"block comments
+	call cursor(1,1)
+
+	while search('\/\*', 'cW') != 0
+
+		let startbc_pos = getpos('.')
+		let startbc = [startbc_pos[1], startbc_pos[2]]
+
+		"echom 'found block comment at ' . startbc[0] . ',' . startbc[1]
+
+		if search('\*\/', 'cWe')
+
+				let endbc_pos = getpos('.')
+				let endbc = [endbc_pos[1], endbc_pos[2]]
+
+				"echom 'ends at ' . endbc[1]
+				call cursor(endbc[0], endbc[1])
+
+				"single line functions
+				if startbc[0] == endbc[0]
+						call matchadd('Comment', '\%' . startbc[0] . 'l\%>' . (startbc[1] - 1) . 'c.*\%<' . (endbc[1] + 1) . 'c' , 100) 
+
+				elseif (startbc[0] + 1) == endbc[0]
+						"two line functions
+						call matchadd('Comment', '\%' . startbc[0] . 'l\%>' . (startbc[1] - 1) . 'c.*', 100) 
+						call matchadd('Comment', '\%' . endbc[0] . 'l.*\%<' . (endbc[1] + 1) . 'c' , 100) 
+				else
+						"multiline functions
+						call matchadd('Comment', '\%' . startbc[0] . 'l\%>' . (startbc[1] - 1) . 'c.*', 100) 
+						call matchadd('Comment', '\%>' . startbc[0] . 'l.*\%<' . endbc[0] . 'l', 100) 
+						call matchadd('Comment', '\%' . endbc[0] . 'l.*\%<' . (endbc[1] + 1) . 'c' , 100) 
+				endif
+		endif
+
+	endwhile
 
 	call setpos('.', save_cursor)
 endfunction
