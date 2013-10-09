@@ -236,6 +236,28 @@ function! Strip(input_string)
     return substitute(a:input_string, '^\s*\(.\{-}\)\s*$', '\1', '')
 endfunction
 
+function! HighlightRange(higroup, start, end, priority)
+	let group = a:higroup
+	let startpos = a:start
+	let endpos = a:end
+	let priority = a:priority
+	"single line regions
+	if startpos[0] == endpos[0]
+		call matchadd(group, '\%' . startpos[0] . 'l\%>' . (startpos[1] - 1) . 'c.*\%<' . (endpos[1] + 1) . 'c' , priority) 
+
+	elseif (startpos[0] + 1) == endpos[0]
+		"two line regions
+		call matchadd(group, '\%' . startpos[0] . 'l\%>' . (startpos[1] - 1) . 'c.*', priority) 
+		call matchadd(group, '\%' . endpos[0] . 'l.*\%<' . (endpos[1] + 1) . 'c' , priority) 
+	else
+		"multiline regions
+		call matchadd(group, '\%' . startpos[0] . 'l\%>' . (startpos[1] - 1) . 'c.*', priority) 
+		call matchadd(group, '\%>' . startpos[0] . 'l.*\%<' . endpos[0] . 'l', priority) 
+		call matchadd(group, '\%' . endpos[0] . 'l.*\%<' . (endpos[1] + 1) . 'c' , priority) 
+	endif
+
+endfunction
+
 "parse the next function after start pos
 function! ParseFunction(start_pos, depth, stopline)
 	"set position to start
@@ -334,20 +356,8 @@ function! FunScope()
 
 	for fn in s:js_functions
 
-		"single line functions
-		if fn.start[0] == fn.block_end[0]
-			call matchadd('F' . (fn.depth), '\%' . fn.start[0] . 'l\%>' . (fn.start[1] - 1) . 'c.*\%<' . (fn.block_end[1] + 1) . 'c' , fn.depth + 10) 
+		call HighlightRange('F' . (fn.depth), fn.start, fn.block_end, fn.depth + 10)
 
-		elseif (fn.start[0] + 1) == fn.block_end[0]
-			"two line functions
-			call matchadd('F' . (fn.depth), '\%' . fn.start[0] . 'l\%>' . (fn.start[1] - 1) . 'c.*', fn.depth + 10) 
-			call matchadd('F' . (fn.depth), '\%' . fn.block_end[0] . 'l.*\%<' . (fn.block_end[1] + 1) . 'c' , fn.depth + 10) 
-		else
-			"multiline functions
-			call matchadd('F' . (fn.depth), '\%' . fn.start[0] . 'l\%>' . (fn.start[1] - 1) . 'c.*', fn.depth + 10) 
-			call matchadd('F' . (fn.depth), '\%>' . fn.start[0] . 'l.*\%<' . fn.block_end[0] . 'l', fn.depth + 10) 
-			call matchadd('F' . (fn.depth), '\%' . fn.block_end[0] . 'l.*\%<' . (fn.block_end[1] + 1) . 'c' , fn.depth + 10) 
-		endif
 	endfor
 
 	call matchadd('Comment', '\/\/.*', 100) 
@@ -370,20 +380,7 @@ function! FunScope()
 				"echom 'ends at ' . endbc[1]
 				call cursor(endbc[0], endbc[1])
 
-				"single line functions
-				if startbc[0] == endbc[0]
-						call matchadd('Comment', '\%' . startbc[0] . 'l\%>' . (startbc[1] - 1) . 'c.*\%<' . (endbc[1] + 1) . 'c' , 100) 
-
-				elseif (startbc[0] + 1) == endbc[0]
-						"two line functions
-						call matchadd('Comment', '\%' . startbc[0] . 'l\%>' . (startbc[1] - 1) . 'c.*', 100) 
-						call matchadd('Comment', '\%' . endbc[0] . 'l.*\%<' . (endbc[1] + 1) . 'c' , 100) 
-				else
-						"multiline functions
-						call matchadd('Comment', '\%' . startbc[0] . 'l\%>' . (startbc[1] - 1) . 'c.*', 100) 
-						call matchadd('Comment', '\%>' . startbc[0] . 'l.*\%<' . endbc[0] . 'l', 100) 
-						call matchadd('Comment', '\%' . endbc[0] . 'l.*\%<' . (endbc[1] + 1) . 'c' , 100) 
-				endif
+				call HighlightRange('Comment', startbc, endbc, 100)
 		endif
 
 	endwhile
