@@ -318,6 +318,7 @@ function! ParseFunction(start_pos, depth, stopline)
 					\	'block_start': copy(start_brace_pos),
 					\	'block_end': copy(end_brace_pos),
 					\	'depth': depth, 
+					\	'scopestack': [], 
 					\	'inner_functions': inner_functions 	}
 	else
 		return {}
@@ -352,7 +353,7 @@ function! ParseVars(text, vars)
 		let matches = matchlist(search_text, varPattern, matchpos)
 		let matchtext = matches[0]
 		"echom matchtext
-		let firstvar = matches[1]
+		let firstvar = Strip(matches[1])
 		"echom firstvar
 		"call add(vars, firstvar)
 		let vars[firstvar] = 1
@@ -387,9 +388,10 @@ function! FunScope()
 	let depth = 1
 	let global_vars = {}
 	let s:js_functions = []
-	let func = ParseFunction([1,1], depth, 0)
 	let start_vars = [1,1]
 	let global_text = ''
+	let scopestack = []
+	let func = ParseFunction([1,1], depth, 0)
 
 	while !empty(func)
 		
@@ -400,6 +402,8 @@ function! FunScope()
 		"todo: parse all vars before functions?
 		"prevent duplicate parsing off all scope text
 		call ParseVars(global_text, global_vars)
+
+		call add(func.scopestack, global_vars)
 
 		"set next start vars to end of this function
 		let start_vars = func.block_end
@@ -417,7 +421,6 @@ function! FunScope()
 	call ParseVars(tail, global_vars)
 
 	
-echom join(keys(global_vars), ',')
 
 	"highlight functions
 	"remove old matches
@@ -432,7 +435,13 @@ echom join(keys(global_vars), ',')
 
 	endfor
 
-	call matchadd('Comment', '\/\/.*', 100) 
+	"highlight globals
+	for global_var in keys(global_vars)
+			let re = '\<' . global_var . '\>'
+			call matchadd('F0', re , 40) 
+	endfor
+
+	call matchadd('Comment', '\/\/.*', 50) 
 
 	"block comments
 	call cursor(1,1)
@@ -452,7 +461,7 @@ echom join(keys(global_vars), ',')
 				"echom 'ends at ' . endbc[1]
 				call cursor(endbc[0], endbc[1])
 
-				call HighlightRange('Comment', startbc, endbc, 100)
+				call HighlightRange('Comment', startbc, endbc, 50)
 		endif
 
 	endwhile
