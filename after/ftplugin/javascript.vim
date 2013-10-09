@@ -159,7 +159,8 @@ endfunction
 
 "define a mapping to temporarily set the colorscheme to funcjs
 if !hasmapto('<Plug>FuncjsToggle')
-	map <localleader>t <Plug>FuncjsToggle
+	"mnemonic (h)ighlight
+	map <localleader>h <Plug>FuncjsToggle
 endif
 nnoremap <script> <Plug>FuncjsToggle <SID>FuncjsToggle
 nnoremap <SID>FuncjsToggle :call <SID>FuncjsToggle()<CR>

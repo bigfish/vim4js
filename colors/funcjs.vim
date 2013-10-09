@@ -264,13 +264,12 @@ function! ParseFunction(start_pos, depth, stopline)
 	call cursor(a:start_pos[0], a:start_pos[1])
 	let depth = a:depth
 
-"TODO: exclude comments
-
 	if search('\<function\>', 'W', a:stopline) > 0
 		let start_function_pos = getpos('.')
 		let start_function_line = start_function_pos[1]
 		let start_function_col = start_function_pos[2]
-"ignore comments
+
+		"ignore comments
 		if synIDattr(synIDtrans(synID(line("."), col("."), 1)), "name") == 'Comment'
 				return ParseFunction([start_function_line, start_function_col + 8] , depth, a:stopline)
 		endif
@@ -326,6 +325,56 @@ function! ParseFunction(start_pos, depth, stopline)
 
 endfunction
 
+function! GetTextRange(startpos, endpos)
+	let lines = getline(a:startpos[0], a:endpos[0])
+	let numlines = len(lines)
+	"hack off end of last line
+	let last_line = lines[numlines - 1]
+	let lines[numlines - 1] = strpart(last_line, 0, a:endpos[1])
+	"trim first part of first line
+	let lines[0] = strpart(lines[0], a:startpos[1])
+	"join into a single string
+	let text = join(lines, '')
+	return text
+endfunction
+
+function! ParseVars(text, vars)
+	"echom "ParseVars(" . a:startpos[0] . ',' . a:endpos[0] . ')'
+	let vars = a:vars
+	let offset = 0
+	let varPattern = '\vvar\s+([^=]+)\s*\=\s*[^;]+;'
+	let multiVarPattern = '\v(\s*\n*,\n*\s*)([^=]+)\s*\=\s*([^;]+);'
+	let search_text = a:text
+	let matchpos = match(search_text, varPattern, offset)
+
+	while matchpos != -1
+		"get the matched text
+		let matches = matchlist(search_text, varPattern, matchpos)
+		let matchtext = matches[0]
+		"echom matchtext
+		let firstvar = matches[1]
+		"echom firstvar
+		"call add(vars, firstvar)
+		let vars[firstvar] = 1
+
+		"get additional vars if multivar statement
+		"these will be of the form: /, name = (something) ... ;/
+		let multiVarPos = match(matchtext, multiVarPattern) 
+		while multiVarPos != -1
+			let multiVarMatch = matchlist(matchtext, multiVarPattern, multiVarPos)
+			let multiVarName = Strip(multiVarMatch[2])
+			"echo multiVarName
+			"call add(vars, multiVarName)
+			let vars[multiVarName] = 1
+			let multiVarPos = match(matchtext, multiVarPattern, multiVarPos + len(multiVarMatch[1])) 
+		endwhile
+
+		let offset = matchpos + len(matchtext)
+		"go to next match position
+		let matchpos = match(search_text, varPattern, offset)
+	endwhile
+endfunction
+
 function! FunScope()
 
 	let c = 0
@@ -335,17 +384,40 @@ function! FunScope()
 	endfor
     "save and restore cursor pos
 	let save_cursor = getpos(".")
-
 	let depth = 1
-
+	let global_vars = {}
 	let s:js_functions = []
-
 	let func = ParseFunction([1,1], depth, 0)
+	let start_vars = [1,1]
+	let global_text = ''
 
 	while !empty(func)
+		
 		call add(s:js_functions, func)
-		let func = ParseFunction([func.block_end[0],func.block_end[1]], depth, 0)
+
+		let global_text .= GetTextRange(start_vars, func.start)
+
+		"todo: parse all vars before functions?
+		"prevent duplicate parsing off all scope text
+		call ParseVars(global_text, global_vars)
+
+		"set next start vars to end of this function
+		let start_vars = func.block_end
+
+		"remember this function for after the while loop exits
+		let last_func = func
+
+		"parse next function
+		let func = ParseFunction(func.block_end, depth, 0)
+
 	endwhile
+
+    "add vars after end of last function
+	let tail = GetTextRange(last_func.block_end, [line('$'), len(getline('$'))])
+	call ParseVars(tail, global_vars)
+
+	
+echom join(keys(global_vars), ',')
 
 	"highlight functions
 	"remove old matches
