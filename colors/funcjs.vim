@@ -25,7 +25,7 @@ if version > 580
     " complaining
     hi clear
     if exists("syntax_on")
-		syntax reset
+		"syntax reset
     endif
 endif
 let g:colors_name="funcjs"
@@ -231,6 +231,14 @@ if &t_Co > 255
    hi SpecialKey      ctermfg=59
 
 end
+
+"defire highlight groups dynamically
+let c = 0
+for colr in s:fun_colors
+		exe 'highlight F' . c . '  ctermfg=' . colr . 'ctermbg=none cterm=none'
+		let c += 1
+endfor
+
 "parse functions
 function! Strip(input_string)
     return substitute(a:input_string, '^\s*\(.\{-}\)\s*$', '\1', '')
@@ -258,20 +266,54 @@ function! HighlightRange(higroup, start, end, priority)
 
 endfunction
 
+function! HighlightWordInRange(start, end, word, higroup, priority)
+
+	let group = a:higroup
+	let startpos = a:start
+	let endpos = a:end
+	let priority = a:priority
+	let word = a:word
+	"single line regions
+	if startpos[0] == endpos[0]
+		call matchadd(group, '\%' . startpos[0] . 'l\%>' . (startpos[1] - 1) . 'c\<' . word . '\>\%<' . (endpos[1] + 1) . 'c' , priority) 
+
+	elseif (startpos[0] + 1) == endpos[0]
+		"two line regions
+		call matchadd(group, '\%' . startpos[0] . 'l\%>' . (startpos[1] - 1) . 'c\<' . word . '\>', priority) 
+		call matchadd(group, '\%' . endpos[0] . 'l\<' . word . '\>\%<' . (endpos[1] + 1) . 'c' , priority) 
+	else
+		"multiline regions
+		call matchadd(group, '\%' . startpos[0] . 'l\%>' . (startpos[1] - 1) . 'c\<' . word . '\>', priority) 
+		call matchadd(group, '\%>' . startpos[0] . 'l\<' . word . '\>\%<' . endpos[0] . 'l', priority) 
+		call matchadd(group, '\%' . endpos[0] . 'l\<' . word . '\>\%<' . (endpos[1] + 1) . 'c' , priority) 
+	endif
+
+endfunction
+
 "parse the next function after start pos
-function! ParseFunction(start_pos, depth, stopline)
+function! ParseFunction(start_pos, depth, stopline, scope)
 	"set position to start
 	call cursor(a:start_pos[0], a:start_pos[1])
 	let depth = a:depth
+	let scope = a:scope
+	let local_vars = {}
+	let start_vars = a:start_pos
+	let local_text = ''
+	let my_scope = copy(scope)
 
-	if search('\<function\>', 'W', a:stopline) > 0
+	if search('\<function\>', 'Wc', a:stopline) > 0
 		let start_function_pos = getpos('.')
 		let start_function_line = start_function_pos[1]
 		let start_function_col = start_function_pos[2]
+		let function_start =  [start_function_line, start_function_col]
+		"add a reference to the local vars dictionary
+		"this will be populated after the function's local text has been
+		"accumulated
+		call add(my_scope, local_vars)
 
 		"ignore comments
-		if synIDattr(synIDtrans(synID(line("."), col("."), 1)), "name") == 'Comment'
-				return ParseFunction([start_function_line, start_function_col + 8] , depth, a:stopline)
+		if synIDattr(synIDtrans(synID(start_function_line, start_function_col, 1)), "name") == 'Comment'
+				return ParseFunction([start_function_line, start_function_col + 8] , depth, a:stopline, my_scope)
 		endif
 
 		"get function name
@@ -280,6 +322,7 @@ function! ParseFunction(start_pos, depth, stopline)
 
 		let function_name = Strip(matchstr(function_def_line, '\v[^(]*', start_function_col + 8))
 
+		echom "parsing function named : " . function_name
 		if len(function_name) > 0
 			let anonymous = 0
 		else
@@ -294,21 +337,37 @@ function! ParseFunction(start_pos, depth, stopline)
 		let start_brace_pos = searchpos('{', 'cW')
 		let end_brace_pos = searchpairpos('{', '', '}')
 
-		"echom "function block start: [" . start_brace_pos[0] . ", " . start_brace_pos[1] . "]"
-		"echom "function block end: [" . end_brace_pos[0] . ", " . end_brace_pos[1] . "]"
+		echom "function block start: [" . start_brace_pos[0] . ", " . start_brace_pos[1] . "]"
+		echom "function block end: [" . end_brace_pos[0] . ", " . end_brace_pos[1] . "]"
+		
 
 		"parse functions inside function block
 		let inner_functions = []
 
-		let inner_func = ParseFunction([start_brace_pos[0], start_brace_pos[1]], depth + 1, end_brace_pos[0])
-
+		let inner_func = ParseFunction([start_brace_pos[0], start_brace_pos[1]], depth + 1, end_brace_pos[0], my_scope)
+		let last_inner_func = inner_func
 		while !empty(inner_func) 
 			"echom 'parsing inner function'
+			let last_inner_func = inner_func
+			let local_text .= GetTextRange(start_vars, inner_func.start)
+			let start_vars = copy(inner_func.block_end)
 			call add(inner_functions, inner_func)
-			let inner_func = ParseFunction([inner_func.block_end[0],inner_func.block_end[1]], depth + 1, end_brace_pos[0])
+			let inner_func = ParseFunction([inner_func.block_end[0],inner_func.block_end[1]], depth + 1, end_brace_pos[0], my_scope)
 		endwhile
 
 		let s:js_functions += inner_functions
+
+		if !empty(last_inner_func)
+				"add vars after end of last function
+				let local_text .= GetTextRange(last_inner_func.block_end, end_brace_pos)
+		else
+				"no inner funcs, parse all text for vars
+				let local_text = GetTextRange(start_vars, end_brace_pos)
+
+		endif
+
+		echo "Local text: " . local_text
+		call ParseVars(local_text, local_vars)
 
 		return { 'start': [start_function_line, start_function_col],
 					\	'anonymous': anonymous,
@@ -318,29 +377,64 @@ function! ParseFunction(start_pos, depth, stopline)
 					\	'block_start': copy(start_brace_pos),
 					\	'block_end': copy(end_brace_pos),
 					\	'depth': depth, 
-					\	'scopestack': [], 
-					\	'inner_functions': inner_functions 	}
+					\	'scopestack': my_scope, 
+					\	'inner_functions': inner_functions, 	}
 	else
 		return {}
 	endif
 
 endfunction
 
+function! Warn(msg)
+		echohl Error | echom msg
+		echohl Normal
+endfunction
+
+function! IsPos(pos)
+		if len(a:pos) != 2
+				return 0
+		endif
+		if type(a:pos[0]) != type(0) 
+				return 0
+		endif
+		if type(a:pos[1]) != type(0) 
+				return 0
+		endif
+
+		return 1
+endfunction
+
+function! Str(obj)
+		if type(a:obj) == type([])
+				return '[' . join(a:obj, ',') . ']'
+		endif
+		return string(a:obj)
+endfunction
+
 function! GetTextRange(startpos, endpos)
+
+"first col is 1
+"first line is 1
+"
+"echom "GetTextRange([" . a:startpos[0] . ',' . a:startpos[1] . '], [' . a:endpos[0] . ',' . a:endpos[1] . '])' 
+"
+	if !IsPos(a:startpos)
+			call Warn("startpos " . Str(a:startpos)  . "is not position list in GetTextRange")
+	endif
 	let lines = getline(a:startpos[0], a:endpos[0])
 	let numlines = len(lines)
 	"hack off end of last line
 	let last_line = lines[numlines - 1]
 	let lines[numlines - 1] = strpart(last_line, 0, a:endpos[1])
 	"trim first part of first line
-	let lines[0] = strpart(lines[0], a:startpos[1])
-	"join into a single string
+	let lines[0] = strpart(lines[0], a:startpos[1] - 1)
+	"join into a single string without newlines
 	let text = join(lines, '')
 	return text
 endfunction
 
 function! ParseVars(text, vars)
-	"echom "ParseVars(" . a:startpos[0] . ',' . a:endpos[0] . ')'
+	echom "ParseVars(" . a:text . ", " . join(keys(a:vars), ',')
 	let vars = a:vars
 	let offset = 0
 	let varPattern = '\vvar\s+([^=]+)\s*\=\s*[^;]+;'
@@ -378,11 +472,7 @@ endfunction
 
 function! FunScope()
 
-	let c = 0
-	for colr in s:fun_colors
-		exe 'highlight F' . c . '  ctermfg=' . colr . 'ctermbg=none cterm=none'
-		let c += 1
-	endfor
+
     "save and restore cursor pos
 	let save_cursor = getpos(".")
 	let depth = 1
@@ -391,19 +481,17 @@ function! FunScope()
 	let start_vars = [1,1]
 	let global_text = ''
 	let scopestack = []
-	let func = ParseFunction([1,1], depth, 0)
+	let eof = [line('$'), len(getline('$'))]
+		
+	call add(scopestack, global_vars)
+	let func = ParseFunction([1,1], depth, 0, scopestack)
+	let last_func = func
 
 	while !empty(func)
-		
+		echo "parsing top level function" . func.name
 		call add(s:js_functions, func)
 
 		let global_text .= GetTextRange(start_vars, func.start)
-
-		"todo: parse all vars before functions?
-		"prevent duplicate parsing off all scope text
-		call ParseVars(global_text, global_vars)
-
-		call add(func.scopestack, global_vars)
 
 		"set next start vars to end of this function
 		let start_vars = func.block_end
@@ -412,15 +500,18 @@ function! FunScope()
 		let last_func = func
 
 		"parse next function
-		let func = ParseFunction(func.block_end, depth, 0)
+		let func = ParseFunction(func.block_end, depth, 0, scopestack)
 
 	endwhile
 
-    "add vars after end of last function
-	let tail = GetTextRange(last_func.block_end, [line('$'), len(getline('$'))])
-	call ParseVars(tail, global_vars)
-
-	
+	"add vars after end of last function
+	if !empty(last_func)
+		let global_text .= GetTextRange(last_func.block_end, eof)
+	else
+		let global_text .= GetTextRange(start_vars, eof])
+	endif
+echom global_text
+	call ParseVars(global_text, global_vars)
 
 	"highlight functions
 	"remove old matches
@@ -430,17 +521,23 @@ function! FunScope()
 	call matchadd('F0', '\%>0l.*\%<' . line('$') . 'l', 10) 
 
 	for fn in s:js_functions
-
+echom "fn depth = " . fn.depth
+echom "fn name = " . fn.name
 		call HighlightRange('F' . (fn.depth), fn.start, fn.block_end, fn.depth + 10)
-
+		echom "size of scopestack: " . len(fn.scopestack)
+		"highlight closure vars
+		let scope_depth = 0
+		for scope in fn.scopestack
+				echom  "scopedepth (" . scope_depth . '):' . join(keys(scope))
+				for var in keys(scope)
+						"let re = '\<' . var . '\>'
+						call HighlightWordInRange(fn.start, fn.block_end, var, 'F' . (scope_depth), 40 + scope_depth  )
+						"call matchadd('F' . scope_depth, re , 40 + scope_depth) 
+				endfor
+				let scope_depth += 1
+		endfor
 	endfor
-
-	"highlight globals
-	for global_var in keys(global_vars)
-			let re = '\<' . global_var . '\>'
-			call matchadd('F0', re , 40) 
-	endfor
-
+	
 	call matchadd('Comment', '\/\/.*', 50) 
 
 	"block comments
@@ -469,6 +566,120 @@ function! FunScope()
 	call setpos('.', save_cursor)
 endfunction
 
-call FunScope()
+"call FunScope()
+
+
+hi TestPass ctermfg=green
+hi TestFail ctermfg=red
+
+function! Fail(msg, ...)
+		:echohl TestFail | echom "[FAIL]" . a:msg
+		for msg in a:000
+				echom msg
+		endfor
+endfunction
+
+function! Pass(expectation)
+		:echohl TestPass | echom a:expectation
+endfunction
+
+function! Assert(passed, message, ...)
+		if a:passed
+				call Pass(a:message)
+		else
+				call Fail(a:message, a:1)
+		endif
+endfunction
+
+function! AssertEqual(a, b, message)
+		call Assert(a:a == a:b, a:message, "expected '" . Str(a:a) . "' to equal '" . Str(a:b) . "'") 
+endfunction
+
+function! AssertRangeEqual(a, b, message)
+		let a = a:a
+		let b = a:b
+		if a.group == b.group  && a.pattern == b.pattern && a.priority == b.priority
+				let eq = 1 
+		else
+				let eq = 0 
+		endif
+		echo a:message
+		call Assert(eq, a:message, "expected '" . Str(a:a) . "' to equal '" . Str(a:b) . "'") 
+endfunction
+
+function! StripTest()
+		echohl Normal | echom  "Strip()"
+		call Assert(Strip("") == "", "should  pass through empty string")
+		call Assert(Strip(" ") == "", "should return empty string when given a string containing only a space")
+		call Assert(Strip(" hello") == "hello", "should remove a leading space")
+		call Assert(Strip("hello ") == "hello", "should remove a trailing space")
+		call Assert(Strip(" hello ") == "hello", "should remove a leading and trailing space")
+		call Assert(Strip("  hello  ") == "hello", "should remove all leading and trailing spaces")
+
+		call Assert(Strip("	") == "", "should strip a tab")
+		call Assert(Strip("	hello there") == "hello there", "should strip a leading tab")
+		call Assert(Strip("hello there	") == "hello there", "should strip a leading and trailing tab")
+
+		call Assert(Strip("\n") == "\n", "should not strip a newline")
+endfunction
+
+function! GetTextRangeTest()
+
+		sp "test1.js"
+		let text = GetTextRange([2,1], [2,7])
+		call AssertEqual(text, 'var _ =', "should get text range from start of single line")
+
+		let text = GetTextRange([4,10], [4,18])
+		call AssertEqual(text, 'existy(x)', "should get text range from offset in single line")
+
+		let text = GetTextRange([6,1], [7,21])
+		call AssertEqual(text, "    var foo = 'bar';    return x != null;", "should get text range of two full lines")
+
+		let text = GetTextRange([6,9], [7,21])
+		call AssertEqual(text, "foo = 'bar';    return x != null;", "should get text range of two  lines, with offset from start")
+		let text = GetTextRange([6,9], [7,18])
+		call AssertEqual(text, "foo = 'bar';    return x != nu", "should get text range of two  lines, with offset from start and end")
+
+		q
+endfunction
+
+function! HighlightRangeTest()
+		sp "test1.js"
+
+		hi Test ctermfg=red
+
+		call clearmatches()
+		call HighlightRange('Test', [2,1], [2,5], 11)
+		let matches = getmatches()
+		call AssertRangeEqual(matches[0], {'group': 'Test', 'pattern': '\%2l\%>0c.*\%<6c', 'priority': 11, 'id': 4}, 
+								\"matches at start of line")
+
+		call clearmatches()
+		call HighlightRange('Test', [2,1], [2,5], 11)
+		let matches = getmatches()
+		call AssertRangeEqual(matches[0], {'group': 'Test', 'pattern': '\%2l\%>0c.*\%<6c', 'priority': 11, 'id': 4},
+								\"matches in middle of line")
+
+		call clearmatches()
+		call HighlightRange('Test', [5,1], [8,1], 11)
+		let matches = getmatches()
+		call AssertRangeEqual(matches[0], {'group': 'Test', 'pattern': '\%5l\%>0c.*', 'priority': 11, 'id': 6},
+								\"matches multiline range")
+		call clearmatches()
+		call HighlightRange('Test', [5,9], [6,11], 11)
+		let matches = getmatches()
+		call AssertRangeEqual(matches[0], {'group': 'Test', 'pattern': '\%5l\%>8c.*', 'priority': 11, 'id': 9},
+								\"matches multiline range")
+
+		q
+endfunction
+
+function! FunScopeTest()
+
+		call StripTest()
+		call GetTextRangeTest()
+		call HighlightRangeTest()
+
+endfunction
 
 hi Comment         ctermfg=243
