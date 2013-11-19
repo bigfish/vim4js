@@ -1,8 +1,3 @@
-" set whitespace for javascript to always use 4 spaces instead of tabs
-setlocal expandtab
-setlocal shiftwidth=4
-setlocal shiftround
-setlocal tabstop=4
 
 "shortcuts to add semicolon or comma at end of line
 imap <Leader>; <Esc>A;<CR>
@@ -134,33 +129,3 @@ function! s:LogFunctionCall()
 		endif
 	end
 endfunction
-
-
-function! s:FuncjsToggle()
-
-	if g:colors_name == 'funcjs'
-		exe 'colorscheme ' . g:original_colorscheme
-		augroup JSFUNC
-				au!
-		augroup END
-
-	else
-		augroup JSFUNC
-				au!
-				au InsertLeave,TextChanged *.js colorscheme funcjs
-		augroup END
-		let g:original_colorscheme = g:colors_name
-		echo g:original_colorscheme
-		colorscheme funcjs
-	end
-
-
-endfunction
-
-"define a mapping to temporarily set the colorscheme to funcjs
-if !hasmapto('<Plug>FuncjsToggle')
-	"mnemonic (h)ighlight
-	map <localleader>h <Plug>FuncjsToggle
-endif
-nnoremap <script> <Plug>FuncjsToggle <SID>FuncjsToggle
-nnoremap <SID>FuncjsToggle :call <SID>FuncjsToggle()<CR>

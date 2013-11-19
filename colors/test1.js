@@ -1,4 +1,3 @@
-/*jshint eqnull:true*/
 var _ = require('underscore');
 
 function existy(x) {
